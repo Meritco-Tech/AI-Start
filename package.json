@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "npx -y node@22 ./node_modules/vite/bin/vite.js --host 0.0.0.0",
+    "build": "npx -y node@22 ./node_modules/vite/bin/vite.js build",
+    "preview": "npx -y node@22 ./node_modules/vite/bin/vite.js preview --host 0.0.0.0",
+    "lint": "npm run build"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "latest",
+    "@vitejs/plugin-vue": "latest",
+    "element-plus": "latest",
+    "vite": "latest",
+    "vue": "latest",
+    "vue-router": "^5.0.6"
+  }
+}

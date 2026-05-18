@@ -2,7 +2,9 @@
   "type": "module",
   "scripts": {
     "dev": "npx -y node@22 ./node_modules/vite/bin/vite.js --host 0.0.0.0",
+    "zhipeng": "npx -y node@22 ./node_modules/vite/bin/vite.js --host 0.0.0.0 --mode zhipeng",
     "build": "npx -y node@22 ./node_modules/vite/bin/vite.js build",
+    "build:zhipeng": "npx -y node@22 ./node_modules/vite/bin/vite.js build --mode zhipeng",
     "preview": "npx -y node@22 ./node_modules/vite/bin/vite.js preview --host 0.0.0.0",
     "lint": "npm run build"
   },

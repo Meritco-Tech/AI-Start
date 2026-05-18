@@ -29,6 +29,10 @@
       type: String,
       required: true,
     },
+    selectedTopicId: {
+      type: [Number, String],
+      default: null,
+    },
     selectedAnalyst: {
       type: String,
       required: true,
@@ -41,6 +45,7 @@
 
   defineEmits([
     "create-topic",
+    "create-analyst",
     "select-topic",
     "select-analyst",
     "select-search",
@@ -81,11 +86,15 @@
         <b>话题</b>
       </div>
       <button
-        v-for="topic in filteredTopics"
-        :key="topic.name"
+        v-for="(topic, index) in filteredTopics"
+        :key="topic.sessionId || `${topic.name}-${index}`"
         class="sidebar-link"
-        :class="{ active: selectedTopic === topic.name }"
-        @click="$emit('select-topic', topic.name)"
+        :class="{
+          active: topic.sessionId
+            ? selectedTopicId === topic.sessionId
+            : selectedTopic === topic.name,
+        }"
+        @click="$emit('select-topic', topic)"
       >
         {{ topic.name }}
       </button>
@@ -109,10 +118,14 @@
         <button
           class="sidebar-link"
           :class="{ active: selectedAnalyst === task.title }"
+          @click="$emit('select-analyst', task)"
         >
           {{ task.title }}
         </button>
       </div>
+      <button class="new-topic-link" @click="$emit('create-analyst')">
+        新建分析师
+      </button>
     </section>
 
     <section class="sidebar-block search-block">
@@ -132,3 +145,168 @@
     </section>
   </aside>
 </template>
+
+<style scoped>
+  .workspace-sidebar {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 286px;
+    height: 100%;
+    overflow-y: auto;
+    padding: 33px 30px 40px 25px;
+    background: #ffffff;
+    border-right: 1px solid #f2f2f2;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .workspace-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  .brand-row strong {
+    font-size: 17px;
+    line-height: 24px;
+    font-weight: 600;
+  }
+
+  .brand-row .el-icon {
+    margin-top: 2px;
+    color: #222222;
+    font-size: 16px;
+  }
+
+  .sidebar-block {
+    margin-top: 24px;
+  }
+
+  .sidebar-block.starred {
+    margin-top: 0;
+  }
+
+  .analyst-block {
+    margin-top: 26px;
+  }
+
+  .search-block {
+    margin-top: 25px;
+  }
+
+  .sidebar-title {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    height: 20px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .sidebar-title .el-icon {
+    width: 14px;
+    color: #151515;
+  }
+
+  .sidebar-title b {
+    font-weight: 500;
+  }
+
+  .section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: #151515;
+  }
+
+  .section-icon .el-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 15px;
+  }
+
+  .topic-title {
+    position: relative;
+    padding-right: 28px;
+  }
+
+  .topic-icon {
+    color: #121212;
+  }
+
+  .analyst-icon {
+    color: #3f247b;
+  }
+
+  .analyst-icon .el-icon {
+    font-size: 16px;
+  }
+
+  .sidebar-block p,
+  .sidebar-link {
+    display: block;
+    width: calc(100% - 25px);
+    margin: 8px 0 0 25px;
+    padding: 0;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    line-height: 17px;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .sidebar-link {
+    color: #333333;
+  }
+
+  .new-topic-link {
+    display: block;
+    width: calc(100% - 25px);
+    margin: 8px 0 0 25px;
+    padding: 0;
+    color: rgba(0, 0, 0, 0.38);
+    font-size: 12px;
+    line-height: 17px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .new-topic-link:hover {
+    color: #4a2788;
+  }
+
+  .sidebar-link.active {
+    color: #333333;
+    font-weight: 400;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .analyst-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .analyst-row .sidebar-link {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1440px) {
+    .workspace-sidebar {
+      flex-basis: 286px;
+    }
+  }
+</style>

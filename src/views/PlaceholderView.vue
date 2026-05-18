@@ -51,3 +51,55 @@
     </section>
   </main>
 </template>
+
+<style scoped>
+  .page-shell {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .home-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 1280px;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .placeholder-page {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    height: 100%;
+    padding: 32px;
+    background: #ffffff;
+  }
+
+  .placeholder-card {
+    width: min(560px, 100%);
+    padding: 42px 44px;
+    border: 1px solid #eeeeee;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%);
+    box-shadow: 0 18px 48px rgba(61, 39, 114, 0.08);
+  }
+
+  .placeholder-card h1 {
+    margin: 18px 0 12px;
+    color: #262626;
+    font-size: 28px;
+    line-height: 38px;
+    font-weight: 600;
+  }
+
+  .placeholder-card p {
+    margin: 0 0 28px;
+    color: rgba(0, 0, 0, 0.58);
+    font-size: 15px;
+    line-height: 26px;
+  }
+</style>

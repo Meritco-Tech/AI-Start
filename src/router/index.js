@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import WorkspaceView from "../views/WorkspaceView.vue";
 import PlaceholderView from "../views/PlaceholderView.vue";
+import SessionView from "../views/SessionView.vue";
 
 const routes = [
   {
@@ -17,14 +18,17 @@ const routes = [
     },
   },
   {
-    path: "/files",
-    name: "files",
-    component: PlaceholderView,
+    path: "/sessions",
+    name: "sessions",
+    component: SessionView,
     meta: {
-      dockKey: "files",
-      title: "文件",
-      description: "文件模块待接入，可在此扩展知识库、报告附件与团队文档管理。",
+      dockKey: "sessions",
+      title: "会话",
     },
+  },
+  {
+    path: "/files",
+    redirect: "/sessions",
   },
   {
     path: "/notice",

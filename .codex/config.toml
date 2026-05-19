@@ -1,0 +1,38 @@
+# Project-local Codex defaults for enterprise-eidos-fe.
+# Keep secrets out of this file.
+
+model = "gpt-5"
+model_reasoning_effort = "medium"
+
+# The project should be edited inside the workspace only.
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[sandbox_workspace_write]
+writable_roots = ["."]
+network_access = false
+
+[tools]
+web = false
+browser = true
+github = true
+
+[project]
+language = "zh-CN"
+primary_framework = "vue"
+package_manager = "npm"
+node_version = ">=22.12.0"
+
+[commands]
+install = "npm ci"
+dev = "npm run dev"
+build = "npm run build"
+preview = "npm run preview"
+
+[mcp]
+# Add project-specific MCP servers here only when they are required.
+# Example:
+# [mcp.servers.example]
+# command = "example-mcp-server"
+# args = []
+

@@ -6,6 +6,20 @@ This directory stores Codex-written change-history notes for file-changing tasks
 
 | Date | Change | File |
 | --- | --- | --- |
+| 2026-05-21 | Fixed ER graph label distortion and expanded the workbench ER graph. | [2026-05-21-improve-workbench-er-graph.md](2026-05-21-improve-workbench-er-graph.md) |
+| 2026-05-20 | Made workbench list count tags smaller and non-bold. | [2026-05-20-lighten-workbench-count-tags.md](2026-05-20-lighten-workbench-count-tags.md) |
+| 2026-05-20 | Aligned workbench count badges with session tags and removed the result header icon. | [2026-05-20-tune-workbench-counts-and-result-header.md](2026-05-20-tune-workbench-counts-and-result-header.md) |
+| 2026-05-20 | Changed the session file/chat layout from two framed panels to a line divider. | [2026-05-20-line-split-session-layout.md](2026-05-20-line-split-session-layout.md) |
+| 2026-05-20 | Redesigned workbench results as a database table browser and richer ER graph. | [2026-05-20-redesign-result-database-view.md](2026-05-20-redesign-result-database-view.md) |
+| 2026-05-20 | Changed workbench/result width ratio to 1:3 and tightened save-task button layout. | [2026-05-20-tune-workbench-result-ratio.md](2026-05-20-tune-workbench-result-ratio.md) |
+| 2026-05-20 | Swapped workbench and execution result positions with a 1:4 width ratio. | [2026-05-20-swap-workbench-result-layout.md](2026-05-20-swap-workbench-result-layout.md) |
+| 2026-05-20 | Added a workbench execution result area, Skills button, and save-task action. | [2026-05-20-add-workbench-result-area.md](2026-05-20-add-workbench-result-area.md) |
+| 2026-05-20 | Changed workbench left/right width ratio to 1:6. | [2026-05-20-adjust-workbench-width-ratio.md](2026-05-20-adjust-workbench-width-ratio.md) |
+| 2026-05-20 | Changed workbench left/right layout from boxed panels to a line divider. | [2026-05-20-line-split-workbench-layout.md](2026-05-20-line-split-workbench-layout.md) |
+| 2026-05-20 | Tuned workbench lists with simpler labels, no dots, and light counter chips. | [2026-05-20-tune-workbench-list-minimal-style.md](2026-05-20-tune-workbench-list-minimal-style.md) |
+| 2026-05-20 | Simplified workbench lists to show only item names and compact status. | [2026-05-20-simplify-workbench-lists.md](2026-05-20-simplify-workbench-lists.md) |
+| 2026-05-20 | Refreshed workbench data-source and task lists with a cleaner row layout. | [2026-05-20-refresh-workbench-lists.md](2026-05-20-refresh-workbench-lists.md) |
+| 2026-05-20 | Added a static workbench dock entry and 1:3 workbench page layout. | [2026-05-20-add-workbench-page.md](2026-05-20-add-workbench-page.md) |
 | 2026-05-19 | Fixed multi-Agent progress so Agent steps update live while running. | [2026-05-19-live-multi-agent-progress.md](2026-05-19-live-multi-agent-progress.md) |
 | 2026-05-19 | Changed multi-Agent workflow display to reveal Agents progressively. | [2026-05-19-progressive-multi-agent-display.md](2026-05-19-progressive-multi-agent-display.md) |
 | 2026-05-19 | Added a coordinator-style multi-Agent answer mode with visible Agent progress. | [2026-05-19-add-multi-agent-mode.md](2026-05-19-add-multi-agent-mode.md) |

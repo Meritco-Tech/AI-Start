@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import WorkspaceView from "../views/WorkspaceView.vue";
 import PlaceholderView from "../views/PlaceholderView.vue";
 import SessionView from "../views/SessionView.vue";
+import WorkbenchView from "../views/WorkbenchView.vue";
 
 const routes = [
   {
@@ -24,6 +25,15 @@ const routes = [
     meta: {
       dockKey: "sessions",
       title: "会话",
+    },
+  },
+  {
+    path: "/workbench",
+    name: "workbench",
+    component: WorkbenchView,
+    meta: {
+      dockKey: "workbench",
+      title: "工作台",
     },
   },
   {

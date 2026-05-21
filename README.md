@@ -44,6 +44,7 @@ npm run preview
 ## Important Routes
 
 - `/home`: main workspace and analysis page.
+- `/workbench`: static workbench page with data source list, task list, and interaction preview.
 - `/sessions`: file-assisted chat page.
 - `/files`: redirects to `/sessions`.
 - `/notice`: notification placeholder.

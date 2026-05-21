@@ -1294,7 +1294,7 @@
   .session-page {
     display: grid;
     grid-template-columns: minmax(260px, 1fr) minmax(0, 3fr);
-    gap: 24px;
+    gap: 0;
     flex: 1;
     min-width: 0;
     height: 100%;
@@ -1305,17 +1305,14 @@
   .file-panel,
   .chat-page {
     min-height: 0;
-    border: 1px solid rgba(62, 38, 118, 0.12);
-    border-radius: 16px;
     background: #ffffff;
-    box-shadow: 0 12px 32px rgba(61, 39, 114, 0.06);
   }
 
   .file-panel {
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%);
+    padding: 10px 24px 10px 0;
+    border-right: 1px solid rgba(62, 38, 118, 0.12);
   }
 
   .panel-heading,
@@ -1466,6 +1463,7 @@
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
     overflow: hidden;
+    padding-left: 24px;
   }
 
   .chat-header {
@@ -2038,8 +2036,15 @@
 
   @media (max-width: 1440px) {
     .session-page {
-      gap: 18px;
       padding: 24px 24px 24px 20px;
+    }
+
+    .file-panel {
+      padding-right: 18px;
+    }
+
+    .chat-page {
+      padding-left: 18px;
     }
 
     .chat-header,

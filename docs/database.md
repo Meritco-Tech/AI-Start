@@ -2,9 +2,44 @@
 
 ## Current State
 
-This repository does not define or run a database. There are no migrations, ORM models, seed scripts, SQL files, or local persistence layers in the frontend codebase.
+This repository does not define migrations, ORM models, seed scripts, SQL files, or local persistence layers.
 
-All durable data is expected to be owned by the backend API behind `/api/v1`.
+All durable product data is expected to be owned by the backend API behind `/api/v1`.
+
+The workbench includes a development-only database proxy middleware for connecting to a configured read-only MySQL data source through Vite:
+
+```text
+server/workbenchDatabaseMiddleware.js
+```
+
+The browser must not connect directly to MySQL. The middleware reads server-side secrets, enforces read-only access, and exposes metadata/query endpoints under `/api/v1/workbench/database`.
+
+## Workbench MySQL Data Source
+
+Configured connection metadata lives in:
+
+```text
+src/config/workbenchConnections.js
+```
+
+Current connection:
+
+- id: `dev-mysql`
+- type: `mysql`
+- host: `120.26.178.41`
+- port: `3306`
+- username: `dev_backend`
+- charset: `utf8mb4`
+- password environment variable: `WORKBENCH_MYSQL_DEV_BACKEND_PASSWORD`
+
+Execution policy:
+
+- read only: `true`
+- require limit: `true`
+- default limit: `100`
+- max limit: `200`
+
+Do not commit real database passwords. Put the password only in local/server environment variables.
 
 ## Frontend Data Models Inferred From API Usage
 
@@ -54,7 +89,7 @@ Used by:
 ## Constraints For Codex
 
 - Do not invent SQL migrations in this frontend repository.
-- Do not assume database table names unless backend documentation is added.
+- Do not hardcode real database credentials into tracked files.
+- Keep workbench SQL execution read-only and limit-bound.
 - If a feature needs persistence, add or update an API contract first.
 - If backend schemas become available, document them here before generating SQL or data-model code.
-

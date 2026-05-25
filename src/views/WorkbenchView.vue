@@ -8,8 +8,14 @@
     Operation,
     Position,
   } from "@element-plus/icons-vue";
+  import {
+    connectWorkbenchDatabase,
+    getWorkbenchTableSchema,
+    listWorkbenchTables,
+  } from "../api/workbenchDatabase";
   import DockNav from "../components/DockNav.vue";
   import { dockItems } from "../config/dockItems";
+  import { defaultWorkbenchConnection } from "../config/workbenchConnections";
 
   const route = useRoute();
   const router = useRouter();
@@ -18,8 +24,12 @@
   const promptText = ref("");
   const activeResultView = ref("dataset");
   const activeDatasetTableId = ref("customer_profile");
+  const databaseConnection = defaultWorkbenchConnection;
+  const databaseStatus = ref("待连接");
+  const isDatabaseConnecting = ref(false);
+  const databaseConnectionSummary = ref(null);
 
-  const dataSources = [
+  const staticDataSources = [
     {
       id: "crm",
       name: "客户经营数据",
@@ -39,6 +49,18 @@
       status: "可用",
     },
   ];
+
+  const dataSources = computed(() => [
+    {
+      id: databaseConnection.id,
+      name: databaseConnection.name,
+      description: `${databaseConnection.connection.host}:${databaseConnection.connection.port}`,
+      type: "MySQL",
+      status: isDatabaseConnecting.value ? "连接中" : databaseStatus.value,
+      isDatabase: true,
+    },
+    ...staticDataSources,
+  ]);
 
   const tasks = [
     {
@@ -81,7 +103,7 @@
     },
   ];
 
-  const databaseTables = [
+  const fallbackDatabaseTables = [
     {
       id: "customer_profile",
       name: "customer_profile",
@@ -238,6 +260,8 @@
     },
   ];
 
+  const databaseTables = ref(fallbackDatabaseTables);
+
   const erNodes = [
     {
       id: "customer",
@@ -348,8 +372,9 @@
 
   const activeDatasetTable = computed(
     () =>
-      databaseTables.find((table) => table.id === activeDatasetTableId.value) ||
-      databaseTables[0],
+      databaseTables.value.find(
+        (table) => table.id === activeDatasetTableId.value,
+      ) || databaseTables.value[0],
   );
 
   const summaryItems = [
@@ -376,10 +401,101 @@
     ElMessage.info("工作台暂为界面预览，后续接入任务执行逻辑");
   };
 
+  const formatTableRows = (value) => {
+    const numberValue = Number(value || 0);
+    if (numberValue >= 1000000) return `${(numberValue / 1000000).toFixed(1)}M`;
+    if (numberValue >= 1000) return `${(numberValue / 1000).toFixed(1)}K`;
+    return `${numberValue}`;
+  };
+
+  const formatUpdatedAt = (value) => {
+    if (!value) return "未知";
+    return String(value).slice(0, 19).replace("T", " ");
+  };
+
+  const mapApiTable = (table) => ({
+    id: table.id,
+    name: table.name,
+    schema: table.schema,
+    label: table.name,
+    rows: formatTableRows(table.rows),
+    fields: table.fields,
+    updatedAt: formatUpdatedAt(table.updatedAt),
+    columns: table.columns || [],
+    isRemote: true,
+  });
+
+  const applyTableSchema = (schema) => {
+    databaseTables.value = databaseTables.value.map((table) =>
+      table.id === schema.id
+        ? {
+            ...table,
+            columns: schema.columns.map((column) => ({
+              name: column.name,
+              type: column.type,
+              key: column.key,
+            })),
+            foreignKeys: schema.foreignKeys,
+          }
+        : table,
+    );
+  };
+
+  const loadTableSchema = async (table) => {
+    if (!table?.isRemote || table.columns?.length) return;
+    const schema = await getWorkbenchTableSchema(databaseConnection.id, table);
+    applyTableSchema(schema);
+  };
+
+  const selectDatasetTable = async (table) => {
+    activeDatasetTableId.value = table.id;
+    activeResultView.value = "dataset";
+    try {
+      await loadTableSchema(table);
+    } catch (error) {
+      ElMessage.warning(`表结构读取失败：${error.message}`);
+    }
+  };
+
+  const connectDatabase = async () => {
+    if (isDatabaseConnecting.value) return;
+    isDatabaseConnecting.value = true;
+    databaseStatus.value = "连接中";
+    try {
+      const summary = await connectWorkbenchDatabase(databaseConnection.id);
+      databaseConnectionSummary.value = summary;
+      const tableResponse = await listWorkbenchTables(
+        databaseConnection.id,
+        databaseConnection.executionPolicy.maxLimit,
+      );
+      const nextTables = tableResponse.tables.map(mapApiTable);
+      if (nextTables.length) {
+        databaseTables.value = nextTables;
+        activeDatasetTableId.value = nextTables[0].id;
+        await loadTableSchema(nextTables[0]);
+      }
+      databaseStatus.value = "已连接";
+      activeResultView.value = "dataset";
+      ElMessage.success("数据库连接成功，已加载真实表清单");
+    } catch (error) {
+      databaseStatus.value = "连接失败";
+      ElMessage.error(`数据库连接失败：${error.message}`);
+    } finally {
+      isDatabaseConnecting.value = false;
+    }
+  };
+
+  const handleDataSourceClick = (source) => {
+    if (source.isDatabase) {
+      connectDatabase();
+    }
+  };
+
   const getStatusTone = (value) => {
     if (["已连接", "可用", "已完成"].includes(value)) return "success";
-    if (["进行中"].includes(value)) return "running";
-    if (["待校验", "待启动"].includes(value)) return "pending";
+    if (["进行中", "连接中"].includes(value)) return "running";
+    if (["待连接", "待校验", "待启动"].includes(value)) return "pending";
+    if (["连接失败"].includes(value)) return "error";
     return "neutral";
   };
 </script>
@@ -412,11 +528,14 @@
                 v-for="source in dataSources"
                 :key="source.id"
                 class="list-row source-row"
+                :class="{ clickable: source.isDatabase }"
+                @click="handleDataSourceClick(source)"
               >
                 <div class="row-main">
                   <div class="row-title">
                     <strong>{{ source.name }}</strong>
                   </div>
+                  <span v-if="source.description">{{ source.description }}</span>
                 </div>
                 <b :class="`tone-${getStatusTone(source.status)}`">{{
                   source.status
@@ -502,7 +621,7 @@
                         :key="table.id"
                         class="table-card"
                         :class="{ active: activeDatasetTableId === table.id }"
-                        @click="activeDatasetTableId = table.id"
+                        @click="selectDatasetTable(table)"
                       >
                         <span>{{ table.label }}</span>
                         <strong>{{ table.name }}</strong>
@@ -657,14 +776,14 @@
     display: flex;
     width: 100%;
     height: 100%;
-    min-width: 1280px;
+    min-width: 0;
     overflow: hidden;
     background: #ffffff;
   }
 
   .workbench-page {
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) minmax(0, 6fr);
+    grid-template-columns: minmax(220px, 0.95fr) minmax(0, 6fr);
     gap: 0;
     flex: 1;
     min-width: 0;
@@ -773,6 +892,10 @@
     background: rgba(255, 255, 255, 0.68);
   }
 
+  .list-row.clickable {
+    cursor: pointer;
+  }
+
   .row-main {
     min-width: 0;
   }
@@ -801,6 +924,14 @@
     font-weight: 400;
   }
 
+  .row-main span {
+    margin-top: 1px;
+    color: rgba(0, 0, 0, 0.38);
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 400;
+  }
+
   .list-row b {
     align-self: center;
     color: rgba(0, 0, 0, 0.48);
@@ -821,10 +952,14 @@
     color: #9a6711;
   }
 
+  .list-row b.tone-error {
+    color: #c24134;
+  }
+
 
   .workbench-main {
     display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0;
     min-width: 0;
     overflow: hidden;
@@ -839,13 +974,15 @@
   }
 
   .result-page {
+    order: 2;
     grid-template-rows: auto minmax(0, 1fr);
-    padding-right: 24px;
-    border-right: 1px solid rgba(62, 38, 118, 0.12);
+    padding-left: 24px;
   }
 
   .chat-page {
-    margin-left: 24px;
+    order: 1;
+    padding-right: 24px;
+    border-right: 1px solid rgba(62, 38, 118, 0.12);
   }
 
   .chat-header {
@@ -1090,7 +1227,7 @@
     grid-template-rows: minmax(0, 1fr) auto;
     min-height: 0;
     overflow: hidden;
-    padding: 28px 28px 24px 0;
+    padding: 28px 0 24px 28px;
     background: linear-gradient(180deg, #ffffff 0%, #fdfcff 100%);
   }
 
@@ -1099,6 +1236,8 @@
   }
 
   .dataset-section {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
     min-height: 0;
     overflow: hidden;
   }
@@ -1151,6 +1290,7 @@
     grid-template-rows: auto minmax(0, 1fr);
     gap: 14px;
     min-height: 0;
+    overflow: hidden;
   }
 
   .dataset-overview {
@@ -1186,6 +1326,7 @@
     grid-template-columns: minmax(180px, 0.95fr) minmax(0, 1.45fr);
     gap: 14px;
     min-height: 0;
+    overflow: hidden;
   }
 
   .table-list {
@@ -1474,11 +1615,11 @@
     }
 
     .result-page {
-      padding-right: 18px;
+      padding-left: 18px;
     }
 
     .chat-page {
-      margin-left: 18px;
+      padding-right: 18px;
     }
 
     .chat-header,
@@ -1488,7 +1629,7 @@
     }
 
     .result-body {
-      padding-right: 22px;
+      padding-left: 22px;
     }
 
     .composer {

@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { workbenchDatabaseMiddleware } from './server/workbenchDatabaseMiddleware.js';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -7,7 +8,15 @@ export default defineConfig(({ mode }) => {
   const deepseekApiOrigin = env.DEEPSEEK_API_ORIGIN || 'https://api.deepseek.com';
 
   return {
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      {
+        name: 'workbench-database-api',
+        configureServer(server) {
+          server.middlewares.use(workbenchDatabaseMiddleware(env));
+        },
+      },
+    ],
     server: {
       proxy: {
         '/api/v1/deepseek': {

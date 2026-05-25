@@ -185,6 +185,74 @@ The session page provides a `多 Agent` switch. It defaults to off.
 - Running agents refresh their detail text with elapsed time, and each subtask agent updates its own status and output as soon as its request completes.
 - Subtask agents are dispatched in parallel from the browser. If an individual subtask fails, its error is shown in the workflow panel and the summary stage can still use the remaining outputs.
 
+### Workbench Database Connections
+
+The workbench page reads database connection metadata from:
+
+```text
+src/config/workbenchConnections.js
+```
+
+Current configured connection:
+
+- id: `dev-mysql`
+- name: `开发 MySQL`
+- type: `mysql`
+- host: `120.26.178.41`
+- port: `3306`
+- username: `dev_backend`
+- charset: `utf8mb4`
+- connect timeout: `8s`
+- read timeout: `20s`
+- write timeout: `20s`
+
+Credential rule:
+
+- The real database password must not be written into frontend source, docs, or any tracked config file.
+- The tracked config stores only the server-side environment variable name:
+
+```bash
+WORKBENCH_MYSQL_DEV_BACKEND_PASSWORD=
+```
+
+Execution policy:
+
+- `read_only: true`
+- `require_limit: true`
+- `default_limit: 100`
+- `max_limit: 200`
+
+The workbench data-source list displays this configured MySQL connection as a data source. Clicking it calls the local workbench database API. The browser still does not connect directly to MySQL; Vite serves a development backend middleware from:
+
+```text
+server/workbenchDatabaseMiddleware.js
+```
+
+Implemented endpoints:
+
+```text
+POST /api/v1/workbench/database/connect?connection_id=dev-mysql
+GET /api/v1/workbench/database/tables?connection_id=dev-mysql&limit=200
+GET /api/v1/workbench/database/tables/:tableName/schema?connection_id=dev-mysql&schema=:schemaName
+POST /api/v1/workbench/database/query?connection_id=dev-mysql
+```
+
+Runtime behavior:
+
+- `/connect` opens a MySQL connection through `mysql2`, returns version/schema metadata, and does not expose credentials.
+- `/tables` reads `information_schema.TABLES` and `information_schema.COLUMNS` to return accessible table metadata.
+- `/tables/:tableName/schema` reads `information_schema.COLUMNS` and `information_schema.KEY_COLUMN_USAGE` to return fields and foreign keys.
+- `/query` runs read-only SQL only after policy enforcement.
+
+Backend enforcement requirements:
+
+- only allow read-only statements;
+- reject mutation and DDL statements such as `insert`, `update`, `delete`, `drop`, `alter`, and `truncate`;
+- require or inject a `LIMIT`;
+- apply default limit `100`;
+- cap requested limits at `200`;
+- return structured JSON errors with `message` or `error`.
+
 ### Workspace
 
 - `GET /workspace/:sessionId/tree`

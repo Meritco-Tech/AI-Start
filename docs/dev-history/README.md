@@ -6,6 +6,14 @@ This directory stores Codex-written change-history notes for file-changing tasks
 
 | Date | Change | File |
 | --- | --- | --- |
+| 2026-05-22 | Hid the workbench dataset table-list scrollbar while keeping internal scroll. | [2026-05-22-hide-workbench-table-scrollbar.md](2026-05-22-hide-workbench-table-scrollbar.md) |
+| 2026-05-22 | Fixed workbench horizontal overflow so 1:1 columns are visible in the browser viewport. | [2026-05-22-fix-workbench-equal-width-overflow.md](2026-05-22-fix-workbench-equal-width-overflow.md) |
+| 2026-05-22 | Changed workbench and execution result columns to equal width. | [2026-05-22-set-workbench-result-equal-width.md](2026-05-22-set-workbench-result-equal-width.md) |
+| 2026-05-22 | Swapped workbench/result positions and fixed result table-list scrolling. | [2026-05-22-swap-workbench-and-fix-table-scroll.md](2026-05-22-swap-workbench-and-fix-table-scroll.md) |
+| 2026-05-21 | Made workbench data-source secondary text smaller. | [2026-05-21-shrink-workbench-source-subtext.md](2026-05-21-shrink-workbench-source-subtext.md) |
+| 2026-05-21 | Fixed local workbench database secret loading and MySQL metadata aliases. | [2026-05-21-fix-workbench-local-db-secret.md](2026-05-21-fix-workbench-local-db-secret.md) |
+| 2026-05-21 | Moved MySQL into workbench data sources and added a real Vite backend database proxy. | [2026-05-21-add-real-workbench-database-proxy.md](2026-05-21-add-real-workbench-database-proxy.md) |
+| 2026-05-21 | Added safe workbench MySQL connection config and a workbench connection entry. | [2026-05-21-add-workbench-database-connection-config.md](2026-05-21-add-workbench-database-connection-config.md) |
 | 2026-05-21 | Fixed ER graph label distortion and expanded the workbench ER graph. | [2026-05-21-improve-workbench-er-graph.md](2026-05-21-improve-workbench-er-graph.md) |
 | 2026-05-20 | Made workbench list count tags smaller and non-bold. | [2026-05-20-lighten-workbench-count-tags.md](2026-05-20-lighten-workbench-count-tags.md) |
 | 2026-05-20 | Aligned workbench count badges with session tags and removed the result header icon. | [2026-05-20-tune-workbench-counts-and-result-header.md](2026-05-20-tune-workbench-counts-and-result-header.md) |

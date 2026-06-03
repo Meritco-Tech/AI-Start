@@ -253,6 +253,51 @@ Backend enforcement requirements:
 - cap requested limits at `200`;
 - return structured JSON errors with `message` or `error`.
 
+### Workbench Tencent WeCom Documents
+
+The workbench page also exposes Tencent WeCom as a document data source. Connection metadata lives in:
+
+```text
+src/config/workbenchConnections.js
+```
+
+Current configured connection:
+
+- id: `wecom-docs`
+- name: `腾讯企业微信`
+- type: `wecom`
+- description: `文档与表格`
+
+Credential rule:
+
+- Do not commit real WeCom credentials.
+- Store only server-side environment variable names in tracked files:
+
+```bash
+WORKBENCH_WECOM_CORP_ID=
+WORKBENCH_WECOM_AGENT_ID=
+WORKBENCH_WECOM_SECRET=
+WORKBENCH_WECOM_DEFAULT_SPACE_ID=
+WORKBENCH_WECOM_SPACES=
+```
+
+Implemented development endpoints:
+
+```text
+POST /api/v1/workbench/wecom/connect?connection_id=wecom-docs
+GET /api/v1/workbench/wecom/spaces?connection_id=wecom-docs
+GET /api/v1/workbench/wecom/files?connection_id=wecom-docs&space_id=:spaceid
+```
+
+Runtime behavior:
+
+- `/connect` uses the configured enterprise id and application secret to request a WeCom application `access_token`; the token is never returned to the browser.
+- `/spaces` first reads configured spaces from `WORKBENCH_WECOM_DEFAULT_SPACE_ID` or `WORKBENCH_WECOM_SPACES` in the form `spaceid:display_name,spaceid2:display_name2`.
+- If no spaces are configured, `/spaces` attempts a best-effort WeDrive space-list request and returns a clear fallback message when the enterprise API does not expose a usable list response.
+- `/files` calls WeCom WeDrive file-list API with the requested `space_id`; if none is passed, it uses `WORKBENCH_WECOM_DEFAULT_SPACE_ID`.
+- When credentials are not configured, the middleware returns a local demo file list so the UI interaction remains usable.
+- When the application token succeeds but the file-list API is unavailable because of app permission or WeDrive scope, the middleware returns a clear message and demo fallback entries.
+
 ### Workspace
 
 - `GET /workspace/:sessionId/tree`

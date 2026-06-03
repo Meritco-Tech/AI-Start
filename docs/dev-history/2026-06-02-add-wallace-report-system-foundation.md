@@ -1,0 +1,28 @@
+# Add Wallace Report System Foundation
+
+- Date and local time: 2026-06-02 23:09 CST
+- Request summary: Prepare the foundation for a Wallace five-province local CSV web report system using the existing Vue/Vite frontend and local data files under `/Users/wentaoding/Downloads/database`.
+- Changed files:
+  - `package.json`
+  - `vite.config.js`
+  - `server/wallaceReportService.js`
+  - `server/wallaceReportMiddleware.js`
+  - `server/__tests__/wallaceReportService.test.js`
+  - `src/api/wallaceReports.js`
+  - `src/config/dockItems.js`
+  - `src/router/index.js`
+  - `src/views/WallaceReportView.vue`
+- Implementation notes:
+  - Added a local Wallace report data adapter that scans CSV sources, registers metric/module metadata, labels common fields, and aggregates a dashboard overview.
+  - Added read-only Vite middleware at `/api/v1/wallace-reports/catalog`, `/api/v1/wallace-reports/overview`, and `/api/v1/wallace-reports/tables/:tableId/sample`.
+  - Skipped full row counting for the two very large detail CSV files and samples their headers/metadata to keep page startup responsive.
+  - Added a `/wallace-reports` Vue route with month and region filters, KPI cards, region/channel/risk/combo summary panels, and a CSV table catalog.
+- Verification performed:
+  - `node --test server/__tests__/*.test.js`
+  - `node -e "import('./server/wallaceReportService.js').then(... getWallaceReportOverview({ month: '202605' }) ...)"`
+  - `node ./node_modules/vite/bin/vite.js build`
+  - Local HTTP checks for `/wallace-reports` and `/api/v1/wallace-reports/overview?month=202605`.
+- Known risks or follow-up items:
+  - Playwright screenshot verification could not run because the local Playwright browser binary is not installed.
+  - The current UI uses lightweight CSS visuals instead of a charting library; richer charts can be added after the final report contents are confirmed.
+  - The metric catalog reflects the 15 CSV files currently available; the Excel workbook contains additional planned metrics that do not yet have local CSV outputs.

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import WorkspaceView from "../views/WorkspaceView.vue";
 import PlaceholderView from "../views/PlaceholderView.vue";
 import SessionView from "../views/SessionView.vue";
+import WallaceReportView from "../views/WallaceReportView.vue";
 import WorkbenchView from "../views/WorkbenchView.vue";
 
 const routes = [
@@ -34,6 +35,15 @@ const routes = [
     meta: {
       dockKey: "workbench",
       title: "工作台",
+    },
+  },
+  {
+    path: "/wallace-reports",
+    name: "wallaceReports",
+    component: WallaceReportView,
+    meta: {
+      dockKey: "wallaceReports",
+      title: "华莱士报表",
     },
   },
   {

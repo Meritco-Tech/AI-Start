@@ -6,6 +6,40 @@ This directory stores Codex-written change-history notes for file-changing tasks
 
 | Date | Change | File |
 | --- | --- | --- |
+| 2026-06-03 | Added a Wallace report overview section heading above the quadrant analysis area. | [2026-06-03-add-wallace-overview-section-heading.md](2026-06-03-add-wallace-overview-section-heading.md) |
+| 2026-06-03 | Tuned Wallace risk/negative chart lines to a softer pale yellow. | [2026-06-03-tune-wallace-danger-lines-pale-yellow.md](2026-06-03-tune-wallace-danger-lines-pale-yellow.md) |
+| 2026-06-03 | Changed Wallace risk/negative chart lines from muted red to low-saturation yellow. | [2026-06-03-soften-wallace-danger-lines-yellow.md](2026-06-03-soften-wallace-danger-lines-yellow.md) |
+| 2026-06-03 | Compressed Wallace top combo rows and regional diagnostics while removing diagnostic row dividers. | [2026-06-03-compact-wallace-combo-and-regional-diagnostics.md](2026-06-03-compact-wallace-combo-and-regional-diagnostics.md) |
+| 2026-06-03 | Removed row dividers from the Wallace high-frequency combo structure panel. | [2026-06-03-remove-wallace-top-combo-row-dividers.md](2026-06-03-remove-wallace-top-combo-row-dividers.md) |
+| 2026-06-03 | Compact Wallace high-income low-profit gap rows and softened province quadrant labels. | [2026-06-03-compact-wallace-gap-and-quadrant-labels.md](2026-06-03-compact-wallace-gap-and-quadrant-labels.md) |
+| 2026-06-03 | Enhanced Wallace province scatter labels and redesigned high-frequency combo rows. | [2026-06-03-enhance-wallace-scatter-and-combo-visual.md](2026-06-03-enhance-wallace-scatter-and-combo-visual.md) |
+| 2026-06-03 | Positioned Wallace province quadrant markers by relative income and profit inside each quadrant. | [2026-06-03-position-wallace-province-scatter.md](2026-06-03-position-wallace-province-scatter.md) |
+| 2026-06-03 | Removed Wallace KPI sparklines and added icons to recommendation panels. | [2026-06-03-remove-kpi-sparklines-add-recommendation-icons.md](2026-06-03-remove-kpi-sparklines-add-recommendation-icons.md) |
+| 2026-06-03 | Added KPI sparklines and changed the dock badge to an operator icon. | [2026-06-03-add-kpi-sparklines-and-operator-icon.md](2026-06-03-add-kpi-sparklines-and-operator-icon.md) |
+| 2026-06-03 | Compact the Wallace region health map and removed row separators. | [2026-06-03-compact-wallace-health-map.md](2026-06-03-compact-wallace-health-map.md) |
+| 2026-06-03 | Replaced the dock real-person avatar and redesigned the Wallace region health panel. | [2026-06-03-replace-avatar-and-health-visual.md](2026-06-03-replace-avatar-and-health-visual.md) |
+| 2026-06-03 | Redesigned Wallace province quadrants and regional diagnostics into matrix and province-level visual indicators. | [2026-06-03-redesign-wallace-quadrant-diagnostics.md](2026-06-03-redesign-wallace-quadrant-diagnostics.md) |
+| 2026-06-03 | Aligned the Wallace high-frequency combo panel width with the high-income low-profit gap panel. | [2026-06-03-align-wallace-top-combo-width.md](2026-06-03-align-wallace-top-combo-width.md) |
+| 2026-06-03 | Simplified Wallace quadrant inner frames and set the high-frequency combo panel to one-third width. | [2026-06-03-simplify-wallace-quadrant-inner-frames.md](2026-06-03-simplify-wallace-quadrant-inner-frames.md) |
+| 2026-06-03 | Set Wallace report display panels to white and softened chart data colors. | [2026-06-03-soften-wallace-panel-and-chart-colors.md](2026-06-03-soften-wallace-panel-and-chart-colors.md) |
+| 2026-06-03 | Changed the Wallace report page's overall background to white. | [2026-06-03-set-wallace-page-background-white.md](2026-06-03-set-wallace-page-background-white.md) |
+| 2026-06-03 | Retuned the Wallace report purple palette, balanced quadrant diagnostics, and moved recommendations upward. | [2026-06-03-retune-wallace-purple-layout.md](2026-06-03-retune-wallace-purple-layout.md) |
+| 2026-06-03 | Shortened Wallace report region labels by hiding the trailing "区域" suffix. | [2026-06-03-shorten-wallace-region-labels.md](2026-06-03-shorten-wallace-region-labels.md) |
+| 2026-06-03 | Made the Wallace regional supplemental diagnostics panel more compact. | [2026-06-03-compact-wallace-regional-diagnostics.md](2026-06-03-compact-wallace-regional-diagnostics.md) |
+| 2026-06-03 | Regrouped Wallace combo-channel and province-quadrant panels by quadrant. | [2026-06-03-regroup-wallace-quadrant-panels.md](2026-06-03-regroup-wallace-quadrant-panels.md) |
+| 2026-06-03 | Polished Wallace report chart layout and regional diagnostic visuals. | [2026-06-03-polish-wallace-report-charts.md](2026-06-03-polish-wallace-report-charts.md) |
+| 2026-06-03 | Refined Wallace report page based on browser comments for trend, data table, province quadrants, and regional diagnostics. | [2026-06-03-refine-wallace-report-browser-comments.md](2026-06-03-refine-wallace-report-browser-comments.md) |
+| 2026-06-02 | Added Wallace quadrant-analysis report dimensions from the Markdown report. | [2026-06-02-add-wallace-quadrant-report-dimensions.md](2026-06-02-add-wallace-quadrant-report-dimensions.md) |
+| 2026-06-02 | Hid the Wallace report metric table scrollbar while preserving internal scroll. | [2026-06-02-hide-wallace-report-table-scrollbar.md](2026-06-02-hide-wallace-report-table-scrollbar.md) |
+| 2026-06-02 | Added the local Wallace report system foundation with CSV-backed APIs and a report route. | [2026-06-02-add-wallace-report-system-foundation.md](2026-06-02-add-wallace-report-system-foundation.md) |
+| 2026-05-28 | Added a WeCom request input dialog and request-body display. | [2026-05-28-add-wecom-request-input-dialog.md](2026-05-28-add-wecom-request-input-dialog.md) |
+| 2026-05-28 | Updated the local WeCom `spaceid` and default `fatherid` value. | [2026-05-28-update-wecom-space-and-fatherid.md](2026-05-28-update-wecom-space-and-fatherid.md) |
+| 2026-05-28 | Changed the WeCom file-list request so `fatherid` defaults to `spaceid`. | [2026-05-28-set-wecom-fatherid-to-spaceid.md](2026-05-28-set-wecom-fatherid-to-spaceid.md) |
+| 2026-05-28 | Updated the local default WeCom space id used by workbench file loading. | [2026-05-28-update-wecom-default-space.md](2026-05-28-update-wecom-default-space.md) |
+| 2026-05-28 | Configured the WeCom workbench source to use a default space id without manual selection. | [2026-05-28-use-default-wecom-space.md](2026-05-28-use-default-wecom-space.md) |
+| 2026-05-28 | Added WeCom space loading and selection before listing files. | [2026-05-28-add-wecom-space-selection.md](2026-05-28-add-wecom-space-selection.md) |
+| 2026-05-28 | Wired the workbench WeCom source to the real enterprise application token flow. | [2026-05-28-connect-real-wecom-app.md](2026-05-28-connect-real-wecom-app.md) |
+| 2026-05-28 | Added Tencent WeCom as a workbench data source for loading document and spreadsheet entries. | [2026-05-28-add-wecom-workbench-source.md](2026-05-28-add-wecom-workbench-source.md) |
 | 2026-05-22 | Hid the workbench dataset table-list scrollbar while keeping internal scroll. | [2026-05-22-hide-workbench-table-scrollbar.md](2026-05-22-hide-workbench-table-scrollbar.md) |
 | 2026-05-22 | Fixed workbench horizontal overflow so 1:1 columns are visible in the browser viewport. | [2026-05-22-fix-workbench-equal-width-overflow.md](2026-05-22-fix-workbench-equal-width-overflow.md) |
 | 2026-05-22 | Changed workbench and execution result columns to equal width. | [2026-05-22-set-workbench-result-equal-width.md](2026-05-22-set-workbench-result-equal-width.md) |

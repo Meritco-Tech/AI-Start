@@ -13,9 +13,16 @@
     getWorkbenchTableSchema,
     listWorkbenchTables,
   } from "../api/workbenchDatabase";
+  import {
+    connectWorkbenchWecom,
+    listWorkbenchWecomFiles,
+  } from "../api/workbenchWecom";
   import DockNav from "../components/DockNav.vue";
   import { dockItems } from "../config/dockItems";
-  import { defaultWorkbenchConnection } from "../config/workbenchConnections";
+  import {
+    defaultWorkbenchConnection,
+    workbenchWecomConnection,
+  } from "../config/workbenchConnections";
 
   const route = useRoute();
   const router = useRouter();
@@ -28,6 +35,20 @@
   const databaseStatus = ref("待连接");
   const isDatabaseConnecting = ref(false);
   const databaseConnectionSummary = ref(null);
+  const wecomConnection = workbenchWecomConnection;
+  const wecomStatus = ref("待连接");
+  const isWecomConnecting = ref(false);
+  const wecomConnectionSummary = ref(null);
+  const activeResultSource = ref("database");
+  const wecomResultMessage = ref("");
+  const wecomDialogVisible = ref(false);
+  const wecomSpaceIdInput = ref(
+    "s.1970325054029777.6159637364iS",
+  );
+  const wecomFatherIdInput = ref(
+    "s.1970325054029777.6159637364iS",
+  );
+  const wecomRequestBody = ref(null);
 
   const staticDataSources = [
     {
@@ -58,6 +79,14 @@
       type: "MySQL",
       status: isDatabaseConnecting.value ? "连接中" : databaseStatus.value,
       isDatabase: true,
+    },
+    {
+      id: wecomConnection.id,
+      name: wecomConnection.name,
+      description: wecomConnection.description,
+      type: "WeCom",
+      status: isWecomConnecting.value ? "连接中" : wecomStatus.value,
+      isWecom: true,
     },
     ...staticDataSources,
   ]);
@@ -261,6 +290,7 @@
   ];
 
   const databaseTables = ref(fallbackDatabaseTables);
+  const wecomFiles = ref([]);
 
   const erNodes = [
     {
@@ -370,18 +400,60 @@
     { id: "product-risk", x1: 78, y1: 27, x2: 78, y2: 68, label: "监控", labelX: 82, labelY: 48 },
   ];
 
-  const activeDatasetTable = computed(
-    () =>
-      databaseTables.value.find(
-        (table) => table.id === activeDatasetTableId.value,
-      ) || databaseTables.value[0],
+  const resultItems = computed(() =>
+    activeResultSource.value === "wecom" ? wecomFiles.value : databaseTables.value,
   );
 
-  const summaryItems = [
-    "本次结果包含 11 张核心业务表，覆盖客户、交易、产品、触达、风险、任务与维度信息。",
-    "交易链路和风险链路已通过 customer_id、order_id、risk_id 建立主关系。",
-    "后续执行可优先读取风险事件表，并回溯客户、订单、触达记录形成分析证据。",
-  ];
+  const activeDatasetTable = computed(
+    () =>
+      resultItems.value.find((table) => table.id === activeDatasetTableId.value) ||
+      resultItems.value[0] ||
+      {
+        id: "empty",
+        name: "暂无数据",
+        label: "暂无数据",
+        updatedAt: "-",
+        columns: [],
+      },
+  );
+
+  const resultOverview = computed(() => {
+    if (activeResultSource.value === "wecom") {
+      const documents = wecomFiles.value.filter((file) => file.type === "document").length;
+      const spreadsheets = wecomFiles.value.filter(
+        (file) => file.type === "spreadsheet",
+      ).length;
+      return [
+        { value: wecomFiles.value.length, label: "文件" },
+        { value: documents, label: "文档" },
+        { value: spreadsheets, label: "表格" },
+      ];
+    }
+    return [
+      { value: databaseTables.value.length, label: "数据表" },
+      { value: "37.5M", label: "记录量" },
+      { value: "135", label: "字段" },
+    ];
+  });
+
+  const summaryItems = computed(() => {
+    if (activeResultSource.value === "wecom") {
+      return [
+        "已加载企业微信中的在线文档与表格，后续分析可引用这些协作文档作为业务上下文。",
+        "文档类资料适合沉淀策略、手册和报告，表格类资料适合承载经营指标与任务跟踪。",
+        wecomRequestBody.value
+          ? `请求消息体：${JSON.stringify(wecomRequestBody.value)}`
+          : "点击腾讯企业微信后输入 spaceid 和 fatherid，再查看请求消息体。",
+        wecomResultMessage.value ||
+          "当前未配置企业微信正式凭证时使用本地演示数据；配置凭证后可替换为真实 API 同步。",
+      ];
+    }
+    return [
+      "本次结果包含 11 张核心业务表，覆盖客户、交易、产品、触达、风险、任务与维度信息。",
+      "交易链路和风险链路已通过 customer_id、order_id、risk_id 建立主关系。",
+      "后续执行可优先读取风险事件表，并回溯客户、订单、触达记录形成分析证据。",
+    ];
+  });
 
   const selectDock = (key) => {
     const target = dockItems.find((item) => item.key === key);
@@ -425,6 +497,19 @@
     isRemote: true,
   });
 
+  const mapWecomFile = (file) => ({
+    id: file.id,
+    name: file.name,
+    label: file.label,
+    type: file.type,
+    rows: file.size,
+    fields: file.status,
+    updatedAt: file.updatedAt,
+    owner: file.owner,
+    columns: file.columns || [],
+    metaText: `${file.size} · ${file.status}`,
+  });
+
   const applyTableSchema = (schema) => {
     databaseTables.value = databaseTables.value.map((table) =>
       table.id === schema.id
@@ -442,6 +527,7 @@
   };
 
   const loadTableSchema = async (table) => {
+    if (activeResultSource.value !== "database") return;
     if (!table?.isRemote || table.columns?.length) return;
     const schema = await getWorkbenchTableSchema(databaseConnection.id, table);
     applyTableSchema(schema);
@@ -475,6 +561,7 @@
         await loadTableSchema(nextTables[0]);
       }
       databaseStatus.value = "已连接";
+      activeResultSource.value = "database";
       activeResultView.value = "dataset";
       ElMessage.success("数据库连接成功，已加载真实表清单");
     } catch (error) {
@@ -485,14 +572,82 @@
     }
   };
 
+  const openWecomDialog = () => {
+    wecomDialogVisible.value = true;
+  };
+
+  const connectWecom = async () => {
+    if (isWecomConnecting.value) return;
+    const spaceId = wecomSpaceIdInput.value.trim();
+    const fatherId = wecomFatherIdInput.value.trim() || spaceId;
+    if (!spaceId || !fatherId) {
+      ElMessage.warning("请先输入 spaceid 和 fatherid");
+      return;
+    }
+    isWecomConnecting.value = true;
+    wecomStatus.value = "连接中";
+    try {
+      const summary = await connectWorkbenchWecom(wecomConnection.id);
+      wecomConnectionSummary.value = summary;
+      if (summary.tokenStatus === "failed") {
+        wecomStatus.value = "连接失败";
+        ElMessage.error(`企业微信应用连接失败：${summary.message}`);
+        return;
+      }
+      const fileResponse = await listWorkbenchWecomFiles(
+        wecomConnection.id,
+        spaceId,
+        fatherId,
+      );
+      const nextFiles = fileResponse.files.map(mapWecomFile);
+      wecomFiles.value = nextFiles;
+      wecomResultMessage.value = fileResponse.message;
+      wecomRequestBody.value =
+        fileResponse.requestBody || {
+          spaceid: spaceId,
+          fatherid: fatherId,
+          sort_type: 1,
+          start: 0,
+          limit: 100,
+        };
+      if (nextFiles.length) {
+        activeDatasetTableId.value = nextFiles[0].id;
+      }
+      activeResultSource.value = "wecom";
+      activeResultView.value = "dataset";
+      wecomDialogVisible.value = false;
+      wecomStatus.value = summary.tokenStatus === "connected" ? "已连接" : "已加载";
+      const suffix =
+        fileResponse.mode === "api-connected"
+          ? ""
+          : fileResponse.mode === "api-connected-with-demo-fallback"
+            ? "（真实应用已连接，文件列表使用演示数据）"
+            : "（演示数据）";
+      if (fileResponse.mode === "api-connected-with-demo-fallback") {
+        ElMessage.warning(`企业微信应用已连接，但文件列表不可用：${fileResponse.message}`);
+      } else {
+        ElMessage.success(`企业微信文档与表格加载成功${suffix}`);
+      }
+    } catch (error) {
+      wecomStatus.value = "连接失败";
+      ElMessage.error(`企业微信连接失败：${error.message}`);
+    } finally {
+      isWecomConnecting.value = false;
+    }
+  };
+
   const handleDataSourceClick = (source) => {
     if (source.isDatabase) {
       connectDatabase();
+      return;
+    }
+    if (source.isWecom) {
+      openWecomDialog();
     }
   };
 
   const getStatusTone = (value) => {
-    if (["已连接", "可用", "已完成"].includes(value)) return "success";
+    if (["已连接", "已加载", "可用", "已完成"].includes(value)) return "success";
     if (["进行中", "连接中"].includes(value)) return "running";
     if (["待连接", "待校验", "待启动"].includes(value)) return "pending";
     if (["连接失败"].includes(value)) return "error";
@@ -528,7 +683,7 @@
                 v-for="source in dataSources"
                 :key="source.id"
                 class="list-row source-row"
-                :class="{ clickable: source.isDatabase }"
+                :class="{ clickable: source.isDatabase || source.isWecom }"
                 @click="handleDataSourceClick(source)"
               >
                 <div class="row-main">
@@ -582,42 +737,44 @@
               <section class="result-section dataset-section">
                 <div class="result-section-heading">
                   <h2>结果数据集</h2>
-                  <div class="result-tabs" aria-label="结果数据集视图切换">
-                    <button
-                      :class="{ active: activeResultView === 'dataset' }"
-                      @click="activeResultView = 'dataset'"
-                    >
-                      数据集
-                    </button>
-                    <button
-                      :class="{ active: activeResultView === 'er' }"
-                      @click="activeResultView = 'er'"
-                    >
-                      ER 图
-                    </button>
+                  <div class="result-controls">
+                    <div class="result-tabs" aria-label="结果数据集视图切换">
+                      <button
+                        :class="{ active: activeResultView === 'dataset' }"
+                        @click="activeResultView = 'dataset'"
+                      >
+                        数据集
+                      </button>
+                      <button
+                        :class="{ active: activeResultView === 'er' }"
+                        @click="activeResultView = 'er'"
+                      >
+                        ER 图
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 <div v-if="activeResultView === 'dataset'" class="dataset-browser">
                   <div class="dataset-overview">
                     <div>
-                      <strong>{{ databaseTables.length }}</strong>
-                      <span>数据表</span>
+                      <strong>{{ resultOverview[0].value }}</strong>
+                      <span>{{ resultOverview[0].label }}</span>
                     </div>
                     <div>
-                      <strong>37.5M</strong>
-                      <span>记录量</span>
+                      <strong>{{ resultOverview[1].value }}</strong>
+                      <span>{{ resultOverview[1].label }}</span>
                     </div>
                     <div>
-                      <strong>135</strong>
-                      <span>字段</span>
+                      <strong>{{ resultOverview[2].value }}</strong>
+                      <span>{{ resultOverview[2].label }}</span>
                     </div>
                   </div>
 
                   <div class="table-explorer">
                     <div class="table-list">
                       <button
-                        v-for="table in databaseTables"
+                        v-for="table in resultItems"
                         :key="table.id"
                         class="table-card"
                         :class="{ active: activeDatasetTableId === table.id }"
@@ -625,7 +782,9 @@
                       >
                         <span>{{ table.label }}</span>
                         <strong>{{ table.name }}</strong>
-                        <small>{{ table.rows }} 行 · {{ table.fields }} 字段</small>
+                        <small>{{
+                          table.metaText || `${table.rows} 行 · ${table.fields} 字段`
+                        }}</small>
                       </button>
                     </div>
 
@@ -761,6 +920,42 @@
         </section>
       </section>
     </section>
+
+    <div v-if="wecomDialogVisible" class="wecom-dialog-mask">
+      <section class="wecom-dialog" aria-label="企业微信连接参数">
+        <header>
+          <h2>腾讯企业微信</h2>
+          <button type="button" @click="wecomDialogVisible = false">关闭</button>
+        </header>
+        <label>
+          <span>spaceid</span>
+          <input v-model="wecomSpaceIdInput" autocomplete="off" />
+        </label>
+        <label>
+          <span>fatherid</span>
+          <input v-model="wecomFatherIdInput" autocomplete="off" />
+        </label>
+        <pre class="request-preview">{{
+          JSON.stringify(
+            {
+              spaceid: wecomSpaceIdInput,
+              fatherid: wecomFatherIdInput || wecomSpaceIdInput,
+              sort_type: 1,
+              start: 0,
+              limit: 100,
+            },
+            null,
+            2,
+          )
+        }}</pre>
+        <footer>
+          <button type="button" @click="wecomDialogVisible = false">取消</button>
+          <button type="button" class="primary" @click="connectWecom">
+            确认连接
+          </button>
+        </footer>
+      </section>
+    </div>
   </main>
 </template>
 
@@ -1258,6 +1453,13 @@
     font-weight: 600;
   }
 
+  .result-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
   .result-tabs {
     display: inline-flex;
     gap: 4px;
@@ -1599,6 +1801,100 @@
     border-radius: 50%;
     background: #c8b8ec;
     content: "";
+  }
+
+  .wecom-dialog-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(16, 13, 26, 0.28);
+  }
+
+  .wecom-dialog {
+    display: grid;
+    gap: 14px;
+    width: min(460px, 100%);
+    padding: 20px;
+    border: 1px solid rgba(62, 38, 118, 0.12);
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 20px 50px rgba(48, 32, 86, 0.18);
+  }
+
+  .wecom-dialog header,
+  .wecom-dialog footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .wecom-dialog h2 {
+    margin: 0;
+    color: #111111;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 600;
+  }
+
+  .wecom-dialog label {
+    display: grid;
+    gap: 6px;
+    color: rgba(0, 0, 0, 0.58);
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  .wecom-dialog input {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #e6dff5;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #111111;
+    font-size: 13px;
+    line-height: 20px;
+    outline: none;
+  }
+
+  .wecom-dialog input:focus {
+    border-color: rgba(74, 39, 136, 0.42);
+    box-shadow: 0 0 0 3px rgba(74, 39, 136, 0.08);
+  }
+
+  .request-preview {
+    margin: 0;
+    max-height: 160px;
+    overflow: auto;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8f5ff;
+    color: rgba(0, 0, 0, 0.72);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: pre-wrap;
+  }
+
+  .wecom-dialog button {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid #e6dff5;
+    border-radius: 8px;
+    background: #ffffff;
+    color: rgba(0, 0, 0, 0.62);
+    font-size: 12px;
+    line-height: 18px;
+    cursor: pointer;
+  }
+
+  .wecom-dialog button.primary {
+    border-color: #4a2788;
+    background: #4a2788;
+    color: #ffffff;
   }
 
   @media (max-width: 1440px) {

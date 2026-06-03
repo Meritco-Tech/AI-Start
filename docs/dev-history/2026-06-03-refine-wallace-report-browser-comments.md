@@ -1,0 +1,22 @@
+# Refine Wallace Report Browser Comments
+
+- Date and local time: 2026-06-03 10:20 CST
+- Request summary: Address browser comments on the Wallace report page: make monthly trend independent from the month filter, remove the CSV data-table panel, show province quadrants by province, and split regional diagnostics by dimension.
+- Changed files:
+  - `server/wallaceReportService.js`
+  - `server/__tests__/wallaceReportService.test.js`
+  - `src/views/WallaceReportView.vue`
+  - `docs/dev-history/README.md`
+  - `docs/dev-history/2026-06-03-refine-wallace-report-browser-comments.md`
+- Implementation notes:
+  - Changed monthly trend aggregation to ignore the selected month while still respecting the selected region.
+  - Replaced the monthly trend table with a lightweight SVG line chart for 202601-202605.
+  - Removed the metric CSV data-table card from the report page.
+  - Reworked province quadrant reporting into province cards, each containing its four quadrant rows.
+  - Reworked regional supplemental diagnostics into separate health, top-bottom profit gap, and combo-margin sections.
+- Verification performed:
+  - `node --test server/__tests__/*.test.js`
+  - `node -e "import('./server/wallaceReportService.js').then(... getWallaceReportOverview({ month: '202605' }) ...)"`
+  - `node ./node_modules/vite/bin/vite.js build`
+- Known risks or follow-up items:
+  - Build still emits the existing Vite large chunk warning.

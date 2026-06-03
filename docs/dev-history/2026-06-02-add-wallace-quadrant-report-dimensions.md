@@ -1,0 +1,23 @@
+# Add Wallace Quadrant Report Dimensions
+
+- Date and local time: 2026-06-02 23:19 CST
+- Request summary: Read `/Users/wentaoding/Desktop/华莱士门店四象限经营分析报告.md` and add the report dimensions from that Markdown analysis to the Wallace web report system without removing existing reports.
+- Changed files:
+  - `server/wallaceQuadrantReportData.js`
+  - `server/wallaceReportService.js`
+  - `server/__tests__/wallaceReportService.test.js`
+  - `src/views/WallaceReportView.vue`
+  - `docs/dev-history/README.md`
+  - `docs/dev-history/2026-06-02-add-wallace-quadrant-report-dimensions.md`
+- Implementation notes:
+  - Added a backend quadrant-analysis data module based on the Markdown report, covering overall quadrants, profit-rate drivers, high-income low-profit gaps, combo channel structure, province quadrants, regional diagnostics, and management recommendations.
+  - Exposed the new data through `getWallaceReportOverview()` as `quadrantAnalysis`.
+  - Appended new report sections to `/wallace-reports` while preserving the existing KPI, region, channel, risk, combo, and CSV catalog panels.
+  - Kept long province and regional lists internally scrollable with hidden scrollbars.
+- Verification performed:
+  - `node --test server/__tests__/*.test.js`
+  - `node -e "import('./server/wallaceReportService.js').then(... getWallaceReportOverview({ month: '202605' }) ...)"`
+  - `node ./node_modules/vite/bin/vite.js build`
+- Known risks or follow-up items:
+  - The quadrant data is currently encoded from the Markdown report; if the output CSV files named in the report are later provided, this module can be replaced with a CSV-backed loader.
+  - Build still emits the existing Vite large chunk warning.

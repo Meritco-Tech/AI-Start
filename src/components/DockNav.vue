@@ -1,5 +1,5 @@
 <script setup>
-  import { SwitchButton } from "@element-plus/icons-vue";
+  import { SwitchButton, UserFilled } from "@element-plus/icons-vue";
 
   defineProps({
     items: {
@@ -34,8 +34,8 @@
     </nav>
     <div class="dock-bottom">
       <div class="avatar-wrap">
-        <img src="/figma/image/mp1bqplk-vf6engs.png" alt="用户头像" />
-        <span></span>
+        <el-icon><UserFilled /></el-icon>
+        <span class="avatar-status"></span>
       </div>
       <el-button
         class="logout-button"
@@ -142,20 +142,22 @@
 
   .avatar-wrap {
     position: relative;
+    display: grid;
+    place-items: center;
     width: 30px;
     height: 30px;
     border-radius: 7px;
     background: #ffffff;
+    color: #5f5790;
+    box-shadow: 0 2px 6px rgba(61, 39, 114, 0.08);
   }
 
-  .avatar-wrap img {
-    width: 30px;
-    height: 30px;
-    object-fit: cover;
-    border-radius: 7px;
+  .avatar-wrap .el-icon {
+    color: inherit;
+    font-size: 16px;
   }
 
-  .avatar-wrap span {
+  .avatar-status {
     position: absolute;
     right: -1px;
     bottom: 1px;

@@ -23,4 +23,17 @@ export const workbenchConnections = [
   },
 ];
 
+export const workbenchWecomConnection = {
+  id: "wecom-docs",
+  name: "腾讯企业微信",
+  type: "wecom",
+  description: "文档与表格",
+  credentialEnv: {
+    corpId: "WORKBENCH_WECOM_CORP_ID",
+    agentId: "WORKBENCH_WECOM_AGENT_ID",
+    secret: "WORKBENCH_WECOM_SECRET",
+  },
+  status: "待连接",
+};
+
 export const defaultWorkbenchConnection = workbenchConnections[0];

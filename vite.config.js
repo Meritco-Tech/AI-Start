@@ -1,6 +1,8 @@
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { workbenchDatabaseMiddleware } from './server/workbenchDatabaseMiddleware.js';
+import { workbenchWecomMiddleware } from './server/workbenchWecomMiddleware.js';
+import { wallaceReportMiddleware } from './server/wallaceReportMiddleware.js';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -13,7 +15,9 @@ export default defineConfig(({ mode }) => {
       {
         name: 'workbench-database-api',
         configureServer(server) {
+          server.middlewares.use(wallaceReportMiddleware(env));
           server.middlewares.use(workbenchDatabaseMiddleware(env));
+          server.middlewares.use(workbenchWecomMiddleware(env));
         },
       },
     ],

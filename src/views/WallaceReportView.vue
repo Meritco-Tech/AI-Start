@@ -7,7 +7,6 @@
     DataAnalysis,
     Grid,
     PriceTag,
-    Refresh,
     Shop,
     TrendCharts,
     Warning,
@@ -27,6 +26,7 @@
   const isLoading = ref(false);
   const selectedMonth = ref("");
   const selectedZone = ref("");
+  const activeReportTab = ref("overview");
 
   const activeDock = computed(() => route.meta.dockKey || "wallaceReports");
   const months = computed(() => catalog.value?.months || []);
@@ -117,6 +117,31 @@
       profitRate: item.revenue ? item.profit / item.revenue : 0,
     })),
   );
+  const isZoneFocused = computed(() => Boolean(selectedZone.value));
+  const currentZoneName = computed(() =>
+    selectedZone.value ? formatRegionName(selectedZone.value) : "全部区域",
+  );
+  const overviewTitle = computed(() =>
+    isZoneFocused.value ? `${currentZoneName.value}经营画像` : "经营指标与健康度总览",
+  );
+  const focusedZoneProfit = computed(() => zoneProfit.value[0] || {});
+  const focusedRiskSignal = computed(() => riskSignals.value[0] || {});
+  const focusedZoneHealth = computed(() => zoneHealth.value[0] || {});
+  const focusedComboMargin = computed(() => comboMargins.value[0] || {});
+  const focusedTopChannel = computed(
+    () =>
+      [...channelItems.value].sort(
+        (left, right) => (right.revenue || 0) - (left.revenue || 0),
+      )[0] || {},
+  );
+  const focusedTrendStart = computed(() => monthlyTrend.value[0] || {});
+  const focusedTrendEnd = computed(() => monthlyTrend.value.at(-1) || {});
+  const focusedTrendLift = computed(() => {
+    const startRevenue = Number(focusedTrendStart.value.revenue || 0);
+    const endRevenue = Number(focusedTrendEnd.value.revenue || 0);
+    if (!startRevenue) return 0;
+    return (endRevenue - startRevenue) / startRevenue;
+  });
 
   const maxZoneProfit = computed(() =>
     Math.max(...zoneProfit.value.map((item) => item.profit), 1),
@@ -312,37 +337,50 @@
           <h1>华莱士经营报表</h1>
           <p>{{ catalog?.dataDir || "/Users/wentaoding/Downloads/database" }}</p>
         </div>
-        <div class="filters">
-          <el-select v-model="selectedMonth" placeholder="月份" size="large">
-            <el-option
-              v-for="month in months"
-              :key="month"
-              :label="month"
-              :value="month"
-            />
-          </el-select>
-          <el-select v-model="selectedZone" placeholder="全部" clearable size="large">
-            <el-option
-              v-for="zone in zones"
-              :key="zone"
-              :label="formatRegionName(zone)"
-              :value="zone"
-            />
-          </el-select>
-          <el-button :icon="Refresh" size="large" @click="loadOverview" />
-        </div>
       </header>
 
-      <section class="overview-section">
+      <nav class="report-tabs" aria-label="报表模块">
+        <label
+          class="report-tab-option"
+          :class="{ active: activeReportTab === 'overview' }"
+        >
+          <input v-model="activeReportTab" type="radio" value="overview" />
+          <span>总览区域</span>
+        </label>
+        <label
+          class="report-tab-option"
+          :class="{ active: activeReportTab === 'quadrant' }"
+        >
+          <input v-model="activeReportTab" type="radio" value="quadrant" />
+          <span>门店四象限经营分析</span>
+        </label>
+      </nav>
+
+      <section v-if="activeReportTab === 'overview'" class="overview-section">
         <div class="section-heading overview-heading">
           <div>
-            <span class="eyebrow">总览区域</span>
-            <h2>经营指标与健康度总览</h2>
+            <h2>{{ overviewTitle }}</h2>
           </div>
-          <p>
-            {{ selectedMonth || "全部月份" }} ·
-            {{ selectedZone ? formatRegionName(selectedZone) : "全部区域" }}
-          </p>
+          <div class="overview-tools">
+            <div class="filters">
+              <el-select v-model="selectedMonth" placeholder="月份" size="large">
+                <el-option
+                  v-for="month in months"
+                  :key="month"
+                  :label="month"
+                  :value="month"
+                />
+              </el-select>
+              <el-select v-model="selectedZone" placeholder="全部" clearable size="large">
+                <el-option
+                  v-for="zone in zones"
+                  :key="zone"
+                  :label="formatRegionName(zone)"
+                  :value="zone"
+                />
+              </el-select>
+            </div>
+          </div>
         </div>
 
         <section class="kpi-grid">
@@ -383,154 +421,306 @@
           </article>
         </section>
 
-        <section class="report-grid main-grid">
-          <article class="panel">
-            <div class="panel-title">
-              <h2>区域利润率</h2>
-              <span>{{ zoneProfit.length }} 个区域</span>
-            </div>
-            <div class="bar-list">
-              <div v-for="item in zoneProfit" :key="item.zone" class="bar-row">
-                <div class="row-label">
-                  <strong>{{ formatRegionName(item.zone) }}</strong>
-                  <span>{{ formatPercent(item.profitRate) }}</span>
-                </div>
-                <div class="bar-track">
-                  <i :style="{ width: `${Math.max((item.profit / maxZoneProfit) * 100, 4)}%` }" />
-                </div>
-                <em>{{ formatMoney(item.profit) }}</em>
+        <template v-if="isZoneFocused">
+          <section class="zone-focus-grid">
+            <article class="panel zone-focus-card">
+              <div class="panel-title">
+                <h2>核心经营表现</h2>
+                <span>{{ currentZoneName }}</span>
               </div>
-            </div>
-          </article>
+              <div class="zone-hero-metric">
+                <span>区域毛利率</span>
+                <strong>{{ formatPercent(focusedZoneProfit.profitRate ?? kpis.profitRate) }}</strong>
+                <em>覆盖 {{ formatNumber(focusedZoneProfit.storeCount ?? kpis.storeCount) }} 家门店</em>
+              </div>
+              <dl class="zone-metric-list">
+                <div>
+                  <dt>区域营收</dt>
+                  <dd>{{ formatMoney(focusedZoneProfit.revenue ?? kpis.totalRevenue) }}</dd>
+                </div>
+                <div>
+                  <dt>区域毛利额</dt>
+                  <dd>{{ formatMoney(focusedZoneProfit.profit ?? kpis.totalProfit) }}</dd>
+                </div>
+                <div>
+                  <dt>主导渠道</dt>
+                  <dd>{{ focusedTopChannel.label || "暂无数据" }}</dd>
+                </div>
+              </dl>
+            </article>
 
-          <article class="panel">
-            <div class="panel-title">
-              <h2>渠道收入结构</h2>
-              <span>{{ selectedMonth || "全部月份" }}</span>
-            </div>
-            <div class="channel-list">
-              <div v-for="item in channelItems" :key="item.label" class="channel-row">
-                <div class="channel-icon">
-                  <el-icon><Grid /></el-icon>
+            <article class="panel zone-focus-card">
+              <div class="panel-title">
+                <h2>风险健康画像</h2>
+                <span>{{ focusedZoneHealth.pattern || "健康度" }}</span>
+              </div>
+              <div class="zone-risk-stack">
+                <div class="zone-risk-item danger">
+                  <span>异常低价率</span>
+                  <strong>{{ formatPercent(focusedRiskSignal.lowPriceRate ?? kpis.lowPriceRate) }}</strong>
                 </div>
-                <div class="channel-body">
-                  <div class="row-label">
-                    <strong>{{ item.label }}</strong>
-                    <span>{{ formatMoney(item.revenue) }}</span>
-                  </div>
-                  <div class="bar-track warm">
-                    <i :style="{ width: `${Math.max((item.revenue / maxChannelRevenue) * 100, 4)}%` }" />
-                  </div>
-                  <small>毛利率 {{ formatPercent(item.profitRate) }}</small>
+                <div class="zone-risk-item">
+                  <span>退款率</span>
+                  <strong>{{ formatPercent(focusedRiskSignal.refundRate ?? kpis.refundRate) }}</strong>
+                </div>
+                <div class="zone-risk-item">
+                  <span>低于全国均值门店占比</span>
+                  <strong>{{ formatPercent(focusedZoneHealth.belowNationalRatio) }}</strong>
                 </div>
               </div>
-            </div>
-          </article>
+              <p class="zone-note">
+                将单一区域视角聚焦在风险水平和健康度，不再展示区域间横向排名。
+              </p>
+            </article>
 
-          <article class="panel">
-            <div class="panel-title">
-              <h2>月度趋势</h2>
-              <span>2026 年内 · 营收 / 毛利率</span>
-            </div>
-            <div class="trend-chart">
-              <svg
-                :viewBox="`0 0 ${trendChart.width} ${trendChart.height}`"
-                role="img"
-                aria-label="2026年月度营收趋势"
-              >
-                <polyline class="trend-line-shadow" :points="trendChart.points" />
-                <polyline class="trend-line" :points="trendChart.points" />
-                <circle
-                  v-for="point in trendChart.points.split(' ').filter(Boolean)"
-                  :key="point"
-                  :cx="point.split(',')[0]"
-                  :cy="point.split(',')[1]"
-                  r="3.8"
-                />
-              </svg>
-              <div class="trend-axis">
-                <span v-for="item in monthlyTrend" :key="item.month">{{ item.month.slice(4) }}月</span>
+            <article class="panel zone-focus-card">
+              <div class="panel-title">
+                <h2>套餐与定价质量</h2>
+                <span>实际 vs 理论</span>
               </div>
-              <div class="trend-summary">
-                <div v-for="item in monthlyTrend" :key="`${item.month}-summary`">
-                  <span>{{ item.month }}</span>
-                  <strong>{{ formatMoney(item.revenue) }}</strong>
-                  <em>{{ formatPercent(item.profitRate) }}</em>
-                </div>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section class="report-grid detail-grid">
-          <article class="panel">
-            <div class="panel-title">
-              <h2>异常低价风险</h2>
-              <span>{{ formatPercent(kpis.refundRate) }} 退款率</span>
-            </div>
-            <div class="bar-list compact">
-              <div v-for="item in riskSignals" :key="item.zone" class="bar-row">
-                <div class="row-label">
-                  <strong>{{ formatRegionName(item.zone) }}</strong>
-                  <span>{{ formatPercent(item.lowPriceRate) }}</span>
-                </div>
-                <div class="bar-track danger">
-                  <i :style="{ width: `${Math.max((item.lowPriceRate / maxRisk) * 100, 4)}%` }" />
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-title">
-              <h2>区域健康度</h2>
-              <span>低于全国均值占比</span>
-            </div>
-            <div class="health-map">
-              <div
-                v-for="item in zoneHealth"
-                :key="`${item.month}-${item.zone}`"
-                class="health-map-row"
-                :class="getHealthTone(item.belowNationalRatio)"
-              >
-                <strong>{{ formatRegionName(item.zone) }}</strong>
-                <div class="health-map-body">
-                  <span>
-                    <b>{{ item.pattern }}</b>
-                    <em>{{ formatPercent(item.belowNationalRatio) }}</em>
-                  </span>
-                  <div class="health-scale">
-                    <i :style="{ width: `${Math.max((item.belowNationalRatio / maxZoneHealth) * 100, 4)}%` }" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-title">
-              <h2>套餐毛利达标</h2>
-              <span>实际 vs 理论</span>
-            </div>
-            <div class="bar-list compact">
-              <div v-for="item in comboMargins" :key="`${item.month}-${item.zone}`" class="bar-row">
-                <div class="row-label">
-                  <strong>{{ formatRegionName(item.zone) }}</strong>
-                  <span>{{ formatPercent(item.passRate) }}</span>
-                </div>
+              <div class="zone-pass-meter">
+                <strong>{{ formatPercent(focusedComboMargin.passRate) }}</strong>
+                <span>套餐毛利达标率</span>
                 <div class="bar-track green">
-                  <i :style="{ width: `${Math.max((item.passRate / maxCombo) * 100, 4)}%` }" />
+                  <i :style="{ width: `${Math.max(Number(focusedComboMargin.passRate || 0) * 100, 4)}%` }" />
                 </div>
               </div>
-            </div>
-          </article>
-        </section>
+              <dl class="zone-metric-list compact-list">
+                <div>
+                  <dt>实际毛利率</dt>
+                  <dd>{{ formatPercent(focusedComboMargin.actualMargin) }}</dd>
+                </div>
+                <div>
+                  <dt>理论毛利率</dt>
+                  <dd>{{ formatPercent(focusedComboMargin.theoreticalMargin) }}</dd>
+                </div>
+                <div>
+                  <dt>毛利侵蚀</dt>
+                  <dd>{{ formatPercent(focusedComboMargin.marginErosion) }}</dd>
+                </div>
+              </dl>
+            </article>
+          </section>
+
+          <section class="report-grid zone-focus-wide-grid">
+            <article class="panel">
+              <div class="panel-title">
+                <h2>渠道收入结构</h2>
+                <span>{{ selectedMonth || "全部月份" }}</span>
+              </div>
+              <div class="channel-list">
+                <div v-for="item in channelItems" :key="item.label" class="channel-row">
+                  <div class="channel-icon">
+                    <el-icon><Grid /></el-icon>
+                  </div>
+                  <div class="channel-body">
+                    <div class="row-label">
+                      <strong>{{ item.label }}</strong>
+                      <span>{{ formatMoney(item.revenue) }}</span>
+                    </div>
+                    <div class="bar-track warm">
+                      <i :style="{ width: `${Math.max((item.revenue / maxChannelRevenue) * 100, 4)}%` }" />
+                    </div>
+                    <small>毛利率 {{ formatPercent(item.profitRate) }}</small>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-title">
+                <h2>月度走势</h2>
+                <span>
+                  环比观察 {{ formatPercent(focusedTrendLift) }}
+                </span>
+              </div>
+              <div class="trend-chart">
+                <svg
+                  :viewBox="`0 0 ${trendChart.width} ${trendChart.height}`"
+                  role="img"
+                  aria-label="选中区域月度营收趋势"
+                >
+                  <polyline class="trend-line-shadow" :points="trendChart.points" />
+                  <polyline class="trend-line" :points="trendChart.points" />
+                  <circle
+                    v-for="point in trendChart.points.split(' ').filter(Boolean)"
+                    :key="point"
+                    :cx="point.split(',')[0]"
+                    :cy="point.split(',')[1]"
+                    r="3.8"
+                  />
+                </svg>
+                <div class="trend-axis">
+                  <span v-for="item in monthlyTrend" :key="item.month">{{ item.month.slice(4) }}月</span>
+                </div>
+                <div class="zone-trend-summary">
+                  <div>
+                    <span>期初营收</span>
+                    <strong>{{ formatMoney(focusedTrendStart.revenue) }}</strong>
+                  </div>
+                  <div>
+                    <span>期末营收</span>
+                    <strong>{{ formatMoney(focusedTrendEnd.revenue) }}</strong>
+                  </div>
+                  <div>
+                    <span>期末毛利率</span>
+                    <strong>{{ formatPercent(focusedTrendEnd.profitRate) }}</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+        </template>
+
+        <template v-else>
+          <section class="report-grid main-grid">
+            <article class="panel">
+              <div class="panel-title">
+                <h2>区域利润率</h2>
+                <span>{{ zoneProfit.length }} 个区域</span>
+              </div>
+              <div class="bar-list">
+                <div v-for="item in zoneProfit" :key="item.zone" class="bar-row">
+                  <div class="row-label">
+                    <strong>{{ formatRegionName(item.zone) }}</strong>
+                    <span>{{ formatPercent(item.profitRate) }}</span>
+                  </div>
+                  <div class="bar-track">
+                    <i :style="{ width: `${Math.max((item.profit / maxZoneProfit) * 100, 4)}%` }" />
+                  </div>
+                  <em>{{ formatMoney(item.profit) }}</em>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-title">
+                <h2>渠道收入结构</h2>
+                <span>{{ selectedMonth || "全部月份" }}</span>
+              </div>
+              <div class="channel-list">
+                <div v-for="item in channelItems" :key="item.label" class="channel-row">
+                  <div class="channel-icon">
+                    <el-icon><Grid /></el-icon>
+                  </div>
+                  <div class="channel-body">
+                    <div class="row-label">
+                      <strong>{{ item.label }}</strong>
+                      <span>{{ formatMoney(item.revenue) }}</span>
+                    </div>
+                    <div class="bar-track warm">
+                      <i :style="{ width: `${Math.max((item.revenue / maxChannelRevenue) * 100, 4)}%` }" />
+                    </div>
+                    <small>毛利率 {{ formatPercent(item.profitRate) }}</small>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-title">
+                <h2>月度趋势</h2>
+                <span>2026 年内 · 营收 / 毛利率</span>
+              </div>
+              <div class="trend-chart">
+                <svg
+                  :viewBox="`0 0 ${trendChart.width} ${trendChart.height}`"
+                  role="img"
+                  aria-label="2026年月度营收趋势"
+                >
+                  <polyline class="trend-line-shadow" :points="trendChart.points" />
+                  <polyline class="trend-line" :points="trendChart.points" />
+                  <circle
+                    v-for="point in trendChart.points.split(' ').filter(Boolean)"
+                    :key="point"
+                    :cx="point.split(',')[0]"
+                    :cy="point.split(',')[1]"
+                    r="3.8"
+                  />
+                </svg>
+                <div class="trend-axis">
+                  <span v-for="item in monthlyTrend" :key="item.month">{{ item.month.slice(4) }}月</span>
+                </div>
+                <div class="trend-summary">
+                  <div v-for="item in monthlyTrend" :key="`${item.month}-summary`">
+                    <span>{{ item.month }}</span>
+                    <strong>{{ formatMoney(item.revenue) }}</strong>
+                    <em>{{ formatPercent(item.profitRate) }}</em>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section class="report-grid detail-grid">
+            <article class="panel">
+              <div class="panel-title">
+                <h2>异常低价风险</h2>
+                <span>{{ formatPercent(kpis.refundRate) }} 退款率</span>
+              </div>
+              <div class="bar-list compact">
+                <div v-for="item in riskSignals" :key="item.zone" class="bar-row">
+                  <div class="row-label">
+                    <strong>{{ formatRegionName(item.zone) }}</strong>
+                    <span>{{ formatPercent(item.lowPriceRate) }}</span>
+                  </div>
+                  <div class="bar-track danger">
+                    <i :style="{ width: `${Math.max((item.lowPriceRate / maxRisk) * 100, 4)}%` }" />
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-title">
+                <h2>区域健康度</h2>
+                <span>低于全国均值占比</span>
+              </div>
+              <div class="health-map">
+                <div
+                  v-for="item in zoneHealth"
+                  :key="`${item.month}-${item.zone}`"
+                  class="health-map-row"
+                  :class="getHealthTone(item.belowNationalRatio)"
+                >
+                  <strong>{{ formatRegionName(item.zone) }}</strong>
+                  <div class="health-map-body">
+                    <span>
+                      <b>{{ item.pattern }}</b>
+                      <em>{{ formatPercent(item.belowNationalRatio) }}</em>
+                    </span>
+                    <div class="health-scale">
+                      <i :style="{ width: `${Math.max((item.belowNationalRatio / maxZoneHealth) * 100, 4)}%` }" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-title">
+                <h2>套餐毛利达标</h2>
+                <span>实际 vs 理论</span>
+              </div>
+              <div class="bar-list compact">
+                <div v-for="item in comboMargins" :key="`${item.month}-${item.zone}`" class="bar-row">
+                  <div class="row-label">
+                    <strong>{{ formatRegionName(item.zone) }}</strong>
+                    <span>{{ formatPercent(item.passRate) }}</span>
+                  </div>
+                  <div class="bar-track green">
+                    <i :style="{ width: `${Math.max((item.passRate / maxCombo) * 100, 4)}%` }" />
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+        </template>
       </section>
 
-      <section class="quadrant-section">
+      <section v-else-if="activeReportTab === 'quadrant'" class="quadrant-section">
         <div class="section-heading">
           <div>
-            <span class="eyebrow">门店四象限经营分析</span>
             <h2>收入规模 × 利润效率</h2>
           </div>
           <p>
@@ -816,7 +1006,7 @@
     align-items: flex-end;
     justify-content: space-between;
     gap: 20px;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
   }
 
   .eyebrow {
@@ -855,24 +1045,67 @@
     width: 150px;
   }
 
-  .filters :deep(.el-select__wrapper),
-  .filters :deep(.el-button) {
+  .filters :deep(.el-select__wrapper) {
     border-color: var(--panel-border);
     background: var(--panel-bg);
     box-shadow: 0 0 0 1px var(--panel-border) inset;
   }
 
   .filters :deep(.el-select__wrapper:hover),
-  .filters :deep(.el-select__wrapper.is-focused),
-  .filters :deep(.el-button:hover) {
+  .filters :deep(.el-select__wrapper.is-focused) {
     border-color: var(--primary);
     box-shadow: 0 0 0 1px var(--primary) inset;
   }
 
   .filters :deep(.el-select__placeholder),
-  .filters :deep(.el-select__selected-item),
-  .filters :deep(.el-button) {
+  .filters :deep(.el-select__selected-item) {
     color: var(--muted);
+  }
+
+  .report-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 18px;
+    padding: 4px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .report-tab-option {
+    height: 34px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .report-tab-option input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .report-tab-option.active {
+    background: var(--primary-soft);
+    color: var(--primary-deep);
+    font-weight: 700;
+  }
+
+  .overview-tools {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .kpi-grid {
@@ -935,6 +1168,143 @@
 
   .detail-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .zone-focus-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .zone-focus-wide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .zone-focus-card {
+    display: flex;
+    min-height: 260px;
+    flex-direction: column;
+  }
+
+  .zone-hero-metric {
+    padding: 18px;
+    border: 1px solid rgba(91, 61, 167, 0.14);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(91, 61, 167, 0.09), rgba(255, 255, 255, 0.9));
+  }
+
+  .zone-hero-metric span,
+  .zone-pass-meter span,
+  .zone-risk-item span,
+  .zone-trend-summary span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .zone-hero-metric strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--text);
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  .zone-hero-metric em {
+    display: block;
+    margin-top: 8px;
+    color: var(--soft-text);
+    font-size: 12px;
+    font-style: normal;
+  }
+
+  .zone-metric-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin: 16px 0 0;
+  }
+
+  .zone-metric-list div,
+  .zone-risk-item,
+  .zone-trend-summary div {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.74);
+  }
+
+  .zone-metric-list dt {
+    margin: 0 0 5px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .zone-metric-list dd,
+  .zone-risk-item strong,
+  .zone-trend-summary strong {
+    margin: 0;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .compact-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .zone-risk-stack {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .zone-risk-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .zone-risk-item strong {
+    color: var(--primary);
+    white-space: nowrap;
+  }
+
+  .zone-risk-item.danger strong {
+    color: var(--danger);
+  }
+
+  .zone-note {
+    margin: auto 0 0;
+    padding-top: 14px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .zone-pass-meter {
+    display: grid;
+    gap: 8px;
+    padding: 18px;
+    border: 1px solid rgba(36, 142, 93, 0.16);
+    border-radius: 8px;
+    background: rgba(36, 142, 93, 0.06);
+  }
+
+  .zone-pass-meter strong {
+    color: var(--success);
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  .zone-trend-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
   }
 
   .overview-section {
@@ -1660,6 +2030,8 @@
 
     .main-grid,
     .detail-grid,
+    .zone-focus-grid,
+    .zone-focus-wide-grid,
     .quadrant-grid,
     .quadrant-main-grid,
     .quadrant-wide-grid,
@@ -1678,6 +2050,25 @@
       flex-wrap: wrap;
     }
 
+    .filters .el-select {
+      flex: 1 1 140px;
+      width: auto;
+    }
+
+    .report-tabs {
+      display: flex;
+      overflow-x: auto;
+    }
+
+    .report-tab-option {
+      flex: 0 0 auto;
+    }
+
+    .overview-tools {
+      align-items: stretch;
+      width: 100%;
+    }
+
     .section-heading {
       align-items: flex-start;
       flex-direction: column;
@@ -1686,6 +2077,8 @@
     .kpi-grid,
     .main-grid,
     .detail-grid,
+    .zone-focus-grid,
+    .zone-focus-wide-grid,
     .quadrant-grid,
     .quadrant-main-grid,
     .quadrant-wide-grid,
@@ -1696,6 +2089,11 @@
 
     .province-quadrant-section > .panel {
       min-height: auto;
+    }
+
+    .compact-list,
+    .zone-trend-summary {
+      grid-template-columns: 1fr;
     }
   }
 </style>

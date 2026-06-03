@@ -14,6 +14,33 @@ server/workbenchDatabaseMiddleware.js
 
 The browser must not connect directly to MySQL. The middleware reads server-side secrets, enforces read-only access, and exposes metadata/query endpoints under `/api/v1/workbench/database`.
 
+## Wallace Report MySQL Data Source
+
+The Wallace report module reads from MySQL by default through:
+
+```text
+server/wallaceReportMiddleware.js
+server/wallaceReportService.js
+server/wallaceReportDatabaseConfig.js
+```
+
+Current connection:
+
+- id: `wallace-report-mysql`
+- type: `mysql`
+- host: `120.26.181.139`
+- port: `3306`
+- username: `dev_backend`
+- database: `data_metrics_v2`
+- charset: `utf8mb4`
+- password environment variable: `WALLACE_REPORT_MYSQL_PASSWORD`
+
+The database table names match the former local CSV file names without the `.csv` suffix. The report service keeps the frontend response shape unchanged by translating MySQL rows into the existing catalog, KPI, trend, risk, health, combo, and sample-table JSON fields.
+
+For tests or temporary local debugging, setting `WALLACE_REPORT_DATA_DIR` switches the Wallace report middleware back to the CSV-compatible reader.
+
+Do not commit real database passwords. Put the password only in local/server environment variables.
+
 ## Workbench MySQL Data Source
 
 Configured connection metadata lives in:

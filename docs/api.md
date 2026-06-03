@@ -185,6 +185,40 @@ The session page provides a `多 Agent` switch. It defaults to off.
 - Running agents refresh their detail text with elapsed time, and each subtask agent updates its own status and output as soon as its request completes.
 - Subtask agents are dispatched in parallel from the browser. If an individual subtask fails, its error is shown in the workflow panel and the summary stage can still use the remaining outputs.
 
+### Wallace Report MySQL Source
+
+The Wallace report API reads from MySQL by default. The table names in the
+database match the former local CSV file names without the `.csv` suffix.
+
+Default non-secret connection values:
+
+```env
+WALLACE_REPORT_MYSQL_HOST=120.26.181.139
+WALLACE_REPORT_MYSQL_PORT=3306
+WALLACE_REPORT_MYSQL_USER=dev_backend
+WALLACE_REPORT_MYSQL_DATABASE=data_metrics_v2
+WALLACE_REPORT_MYSQL_PASSWORD=
+```
+
+`WALLACE_REPORT_MYSQL_PASSWORD` is server-side only and must be set in local or
+deployment secret storage. Do not prefix it with `VITE_`.
+
+For temporary CSV compatibility in tests or local debugging, set
+`WALLACE_REPORT_DATA_DIR`; when this variable is present the Wallace report
+middleware uses the CSV directory instead of MySQL.
+
+Implemented endpoints:
+
+```text
+GET /api/v1/wallace-reports/catalog
+GET /api/v1/wallace-reports/overview?month=202605&zone=上海区域
+GET /api/v1/wallace-reports/tables/:tableId/sample?limit=20
+```
+
+The response shapes are unchanged from the CSV-backed implementation, so the
+frontend report page can keep using the same catalog, KPI, trend, risk, health,
+combo, and table-sample fields.
+
 ### Workbench Database Connections
 
 The workbench page reads database connection metadata from:

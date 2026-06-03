@@ -3,6 +3,7 @@ import {
   getWallaceReportOverview,
   getWallaceTableSample,
 } from "./wallaceReportService.js";
+import { getWallaceReportDatabaseConfig } from "./wallaceReportDatabaseConfig.js";
 
 const API_PREFIX = "/api/v1/wallace-reports";
 
@@ -17,10 +18,20 @@ const getDataDir = (env) =>
   process.env.WALLACE_REPORT_DATA_DIR ||
   "/Users/wentaoding/Downloads/database";
 
+const getServiceOptions = (env) => {
+  if (env.WALLACE_REPORT_DATA_DIR || process.env.WALLACE_REPORT_DATA_DIR) {
+    return { dataDir: getDataDir(env) };
+  }
+  return {
+    env,
+    mysqlConfig: getWallaceReportDatabaseConfig(env),
+  };
+};
+
 const routeRequest = async (req, res, env) => {
   const url = new URL(req.url, "http://localhost");
   const pathname = url.pathname;
-  const dataDir = getDataDir(env);
+  const serviceOptions = getServiceOptions(env);
 
   if (req.method !== "GET") {
     sendJson(res, 405, { error: "Only GET requests are supported." });
@@ -28,7 +39,7 @@ const routeRequest = async (req, res, env) => {
   }
 
   if (pathname === `${API_PREFIX}/catalog`) {
-    sendJson(res, 200, await getWallaceReportCatalog({ dataDir }));
+    sendJson(res, 200, await getWallaceReportCatalog(serviceOptions));
     return;
   }
 
@@ -37,7 +48,7 @@ const routeRequest = async (req, res, env) => {
       res,
       200,
       await getWallaceReportOverview({
-        dataDir,
+        ...serviceOptions,
         month: url.searchParams.get("month") || "",
         zone: url.searchParams.get("zone") || "",
       }),
@@ -53,7 +64,7 @@ const routeRequest = async (req, res, env) => {
       res,
       200,
       await getWallaceTableSample({
-        dataDir,
+        ...serviceOptions,
         tableId: decodeURIComponent(sampleMatch[1]),
         limit: url.searchParams.get("limit"),
       }),

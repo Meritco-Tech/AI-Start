@@ -6,6 +6,10 @@ This directory stores Codex-written change-history notes for file-changing tasks
 
 | Date | Change | File |
 | --- | --- | --- |
+| 2026-06-03 | Removed duplicated Wallace tab heading eyebrow labels and overview filter summary text. | [2026-06-03-remove-wallace-tab-heading-eyebrows.md](2026-06-03-remove-wallace-tab-heading-eyebrows.md) |
+| 2026-06-03 | Split the Wallace report overview and quadrant analysis into switchable tabs. | [2026-06-03-add-wallace-report-tabs.md](2026-06-03-add-wallace-report-tabs.md) |
+| 2026-06-03 | Switched the Wallace report module from local CSV files to a MySQL data source. | [2026-06-03-switch-wallace-report-to-mysql-source.md](2026-06-03-switch-wallace-report-to-mysql-source.md) |
+| 2026-06-03 | Redesigned the Wallace selected-zone overview while preserving the all-region overview. | [2026-06-03-redesign-wallace-focused-zone-overview.md](2026-06-03-redesign-wallace-focused-zone-overview.md) |
 | 2026-06-03 | Added a Wallace report overview section heading above the quadrant analysis area. | [2026-06-03-add-wallace-overview-section-heading.md](2026-06-03-add-wallace-overview-section-heading.md) |
 | 2026-06-03 | Tuned Wallace risk/negative chart lines to a softer pale yellow. | [2026-06-03-tune-wallace-danger-lines-pale-yellow.md](2026-06-03-tune-wallace-danger-lines-pale-yellow.md) |
 | 2026-06-03 | Changed Wallace risk/negative chart lines from muted red to low-saturation yellow. | [2026-06-03-soften-wallace-danger-lines-yellow.md](2026-06-03-soften-wallace-danger-lines-yellow.md) |

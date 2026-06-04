@@ -6,6 +6,14 @@ This directory stores Codex-written change-history notes for file-changing tasks
 
 | Date | Change | File |
 | --- | --- | --- |
+| 2026-06-04 | Refined Wallace focused summary cards and moved all-region cost Top 1/2/3 markers into the heat matrix. | [2026-06-04-refine-wallace-focused-summary-and-heat-ranks.md](2026-06-04-refine-wallace-focused-summary-and-heat-ranks.md) |
+| 2026-06-04 | Added hover feedback to Wallace all-region customer and cost diagnostic rows. | [2026-06-04-add-hover-effects-to-wallace-diagnostics.md](2026-06-04-add-hover-effects-to-wallace-diagnostics.md) |
+| 2026-06-04 | Made Wallace all-region customer and cost diagnostic rows clickable and centered their legends. | [2026-06-04-add-clickable-wallace-all-region-diagnostics.md](2026-06-04-add-clickable-wallace-all-region-diagnostics.md) |
+| 2026-06-04 | Redesigned Wallace all-region diagnostic cards with customer matrix, cost heat matrix, and profit-gap bands. | [2026-06-04-redesign-wallace-all-region-diagnostic-visuals.md](2026-06-04-redesign-wallace-all-region-diagnostic-visuals.md) |
+| 2026-06-04 | Redesigned Wallace focused-region diagnostic cards with customer portrait, margin radar, and head-tail comparison visuals. | [2026-06-04-redesign-wallace-focused-diagnostic-visuals.md](2026-06-04-redesign-wallace-focused-diagnostic-visuals.md) |
+| 2026-06-04 | Optimized Wallace focused-region diagnostic cards for customer structure, cost margins, and store head-tail gaps. | [2026-06-04-optimize-wallace-focused-diagnostic-cards.md](2026-06-04-optimize-wallace-focused-diagnostic-cards.md) |
+| 2026-06-03 | Added Wallace overview diagnostic modules for channels, customers, costs, and store head-tail gaps. | [2026-06-03-add-wallace-overview-diagnostic-modules.md](2026-06-03-add-wallace-overview-diagnostic-modules.md) |
+| 2026-06-03 | Made Wallace overview region lists clickable to enter focused single-region overviews. | [2026-06-03-add-clickable-wallace-region-lists.md](2026-06-03-add-clickable-wallace-region-lists.md) |
 | 2026-06-03 | Removed duplicated Wallace tab heading eyebrow labels and overview filter summary text. | [2026-06-03-remove-wallace-tab-heading-eyebrows.md](2026-06-03-remove-wallace-tab-heading-eyebrows.md) |
 | 2026-06-03 | Split the Wallace report overview and quadrant analysis into switchable tabs. | [2026-06-03-add-wallace-report-tabs.md](2026-06-03-add-wallace-report-tabs.md) |
 | 2026-06-03 | Switched the Wallace report module from local CSV files to a MySQL data source. | [2026-06-03-switch-wallace-report-to-mysql-source.md](2026-06-03-switch-wallace-report-to-mysql-source.md) |

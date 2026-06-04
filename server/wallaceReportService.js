@@ -160,9 +160,14 @@ const FIELD_LABELS = {
 
 const REPORT_TABLE_NAMES = {
   "1.1+1.2": "1.1+1.2 月度门店利润 & 渠道拆解",
+  "1.3": "1.3 渠道收入+订单量+客单价结构",
   "1.4+1.5+1.11": "1.4+1.5+1.11 区域利润率分析",
+  "1.6+1.9": "1.6+1.9 成本结构(食材+堂食+外卖+团购毛利率)",
+  "1.10": "1.10 头部vs尾部门店利润差距",
   "3.5+3.7+3.8": "3.5+3.7+3.8 套餐毛利率分析(实际vs理论+TOP20+达标率)",
   "5.1+5.2+5.5+5.6": "5.1+5.2+5.5+5.6 异常低价综合",
+  "6.19+6.20": "6.19+6.20 新老客分析(订单占比+消费额占比)",
+  "6.21+6.22": "6.21+6.22 会员分析(订单占比+消费占比)",
 };
 
 const catalogCache = new Map();
@@ -910,6 +915,135 @@ const aggregateMysqlComboMargins = async (pool, filters) => {
   }));
 };
 
+const aggregateMysqlOperatingChannels = async (pool, filters) => {
+  const tableName = quoteId(getTableName("1.3"));
+  const where = buildWhereClause(filters);
+  const [rows] = await pool.query(
+    `SELECT COALESCE(channel_2, '未标记渠道') AS channel,
+            COALESCE(SUM(order_cnt), 0) AS orders,
+            COALESCE(SUM(revenue), 0) AS revenue,
+            COALESCE(AVG(avg_order_value), 0) AS avgOrderValue
+       FROM ${tableName}${where.sql}
+      GROUP BY channel_2
+      ORDER BY SUM(revenue) DESC`,
+    where.params,
+  );
+
+  return rows.map((row) => ({
+    channel: row.channel || "未标记渠道",
+    orders: Number(row.orders || 0),
+    revenue: Number(row.revenue || 0),
+    avgOrderValue: Number(row.avgOrderValue || 0),
+  }));
+};
+
+const aggregateMysqlCustomerStructure = async (pool, filters) => {
+  const newOldTableName = quoteId(getTableName("6.19+6.20"));
+  const memberTableName = quoteId(getTableName("6.21+6.22"));
+  const newOldWhere = buildWhereClause(filters);
+  const memberWhere = buildWhereClause(filters);
+  const [newOldRows] = await pool.query(
+    `SELECT zone_name AS zone,
+            COALESCE(SUM(new_cust_orders), 0) AS newOrders,
+            COALESCE(SUM(returning_orders), 0) AS returningOrders,
+            COALESCE(AVG(new_order_rate), 0) AS newOrderRate,
+            COALESCE(SUM(new_cust_rev), 0) AS newRevenue,
+            COALESCE(SUM(returning_rev), 0) AS returningRevenue,
+            COALESCE(AVG(new_rev_rate), 0) AS newRevRate
+       FROM ${newOldTableName}${newOldWhere.sql}
+      GROUP BY zone_name`,
+    newOldWhere.params,
+  );
+  const [memberRows] = await pool.query(
+    `SELECT zone_name AS zone,
+            COALESCE(AVG(member_order_rate), 0) AS memberOrderRate,
+            COALESCE(AVG(member_rev_rate), 0) AS memberRevRate,
+            COALESCE(SUM(member_orders), 0) AS memberOrders,
+            COALESCE(SUM(total_orders), 0) AS totalOrders,
+            COALESCE(SUM(member_rev), 0) AS memberRevenue,
+            COALESCE(SUM(total_rev), 0) AS totalRevenue
+       FROM ${memberTableName}${memberWhere.sql}
+      GROUP BY zone_name`,
+    memberWhere.params,
+  );
+
+  const rows = new Map();
+  newOldRows.forEach((row) => {
+    rows.set(row.zone || "未标记区域", {
+      zone: row.zone || "未标记区域",
+      newOrders: Number(row.newOrders || 0),
+      returningOrders: Number(row.returningOrders || 0),
+      newOrderRate: Number(row.newOrderRate || 0),
+      newRevenue: Number(row.newRevenue || 0),
+      returningRevenue: Number(row.returningRevenue || 0),
+      newRevRate: Number(row.newRevRate || 0),
+    });
+  });
+  memberRows.forEach((row) => {
+    const zone = row.zone || "未标记区域";
+    rows.set(zone, {
+      ...(rows.get(zone) || { zone }),
+      memberOrderRate: Number(row.memberOrderRate || 0),
+      memberRevRate: Number(row.memberRevRate || 0),
+      memberOrders: Number(row.memberOrders || 0),
+      totalOrders: Number(row.totalOrders || 0),
+      memberRevenue: Number(row.memberRevenue || 0),
+      totalRevenue: Number(row.totalRevenue || 0),
+    });
+  });
+
+  return [...rows.values()].sort(
+    (left, right) => (right.newOrderRate || 0) - (left.newOrderRate || 0),
+  );
+};
+
+const aggregateMysqlCostMargins = async (pool, filters) => {
+  const tableName = quoteId(getTableName("1.6+1.9"));
+  const where = buildWhereClause(filters);
+  const [rows] = await pool.query(
+    `SELECT zone_name AS zone,
+            COALESCE(AVG(material_cost_rate), 0) AS materialCostRate,
+            COALESCE(AVG(dinein_margin), 0) AS dineinMargin,
+            COALESCE(AVG(delivery_margin), 0) AS deliveryMargin,
+            COALESCE(AVG(group_margin), 0) AS groupMargin
+       FROM ${tableName}${where.sql}
+      GROUP BY zone_name
+      ORDER BY AVG(material_cost_rate) DESC`,
+    where.params,
+  );
+
+  return rows.map((row) => ({
+    zone: row.zone || "未标记区域",
+    materialCostRate: Number(row.materialCostRate || 0),
+    dineinMargin: Number(row.dineinMargin || 0),
+    deliveryMargin: Number(row.deliveryMargin || 0),
+    groupMargin: Number(row.groupMargin || 0),
+  }));
+};
+
+const aggregateMysqlHeadTailGap = async (pool, filters) => {
+  const tableName = quoteId(getTableName("1.10"));
+  const where = buildWhereClause(filters);
+  const [rows] = await pool.query(
+    `SELECT month,
+            zone_name AS zone,
+            top20_profit AS top20Profit,
+            bottom20_profit AS bottom20Profit,
+            profit_gap AS profitGap
+       FROM ${tableName}${where.sql}
+      ORDER BY profit_gap DESC`,
+    where.params,
+  );
+
+  return rows.map((row) => ({
+    month: row.month,
+    zone: row.zone || "未标记区域",
+    top20Profit: Number(row.top20Profit || 0),
+    bottom20Profit: Number(row.bottom20Profit || 0),
+    profitGap: Number(row.profitGap || 0),
+  }));
+};
+
 async function getCsvWallaceReportOverview(options = {}) {
   const dataDir = options.dataDir || DEFAULT_DATA_DIR;
   const filters = {
@@ -956,6 +1090,10 @@ async function getCsvWallaceReportOverview(options = {}) {
     riskSignals: risk.riskSignals,
     zoneHealth,
     comboMargins,
+    operatingChannels: [],
+    customerStructure: [],
+    costMargins: [],
+    headTailGap: [],
     quadrantAnalysis: wallaceQuadrantAnalysis,
     tables: catalog.tables,
   };
@@ -981,6 +1119,10 @@ async function getMysqlWallaceReportOverview(options = {}) {
   const risk = await aggregateMysqlRiskSignals(pool, filters);
   const zoneHealth = await aggregateMysqlZoneHealth(pool, filters);
   const comboMargins = await aggregateMysqlComboMargins(pool, filters);
+  const operatingChannels = await aggregateMysqlOperatingChannels(pool, filters);
+  const customerStructure = await aggregateMysqlCustomerStructure(pool, filters);
+  const costMargins = await aggregateMysqlCostMargins(pool, filters);
+  const headTailGap = await aggregateMysqlHeadTailGap(pool, filters);
 
   const overview = {
     filters: {
@@ -1008,6 +1150,10 @@ async function getMysqlWallaceReportOverview(options = {}) {
     riskSignals: risk.riskSignals,
     zoneHealth,
     comboMargins,
+    operatingChannels,
+    customerStructure,
+    costMargins,
+    headTailGap,
     quadrantAnalysis: wallaceQuadrantAnalysis,
     tables: catalog.tables,
   };

@@ -38,6 +38,10 @@
   const riskSignals = computed(() => overview.value?.riskSignals || []);
   const zoneHealth = computed(() => overview.value?.zoneHealth || []);
   const comboMargins = computed(() => overview.value?.comboMargins || []);
+  const operatingChannels = computed(() => overview.value?.operatingChannels || []);
+  const customerStructure = computed(() => overview.value?.customerStructure || []);
+  const costMargins = computed(() => overview.value?.costMargins || []);
+  const headTailGap = computed(() => overview.value?.headTailGap || []);
   const quadrantAnalysis = computed(() => overview.value?.quadrantAnalysis || {});
   const overallQuadrants = computed(
     () => quadrantAnalysis.value.overallQuadrants || [],
@@ -128,6 +132,9 @@
   const focusedRiskSignal = computed(() => riskSignals.value[0] || {});
   const focusedZoneHealth = computed(() => zoneHealth.value[0] || {});
   const focusedComboMargin = computed(() => comboMargins.value[0] || {});
+  const focusedCustomerStructure = computed(() => customerStructure.value[0] || {});
+  const focusedCostMargin = computed(() => costMargins.value[0] || {});
+  const focusedHeadTailGap = computed(() => headTailGap.value[0] || {});
   const focusedTopChannel = computed(
     () =>
       [...channelItems.value].sort(
@@ -142,6 +149,154 @@
     if (!startRevenue) return 0;
     return (endRevenue - startRevenue) / startRevenue;
   });
+  const focusedCustomerNewOrderRate = computed(() =>
+    Math.min(Math.max(Number(focusedCustomerStructure.value.newOrderRate || 0), 0), 1),
+  );
+  const focusedCustomerReturningOrderRate = computed(() =>
+    Math.max(1 - focusedCustomerNewOrderRate.value, 0),
+  );
+  const focusedCustomerMemberOrderRate = computed(() =>
+    Math.min(Math.max(Number(focusedCustomerStructure.value.memberOrderRate || 0), 0), 1),
+  );
+  const customerProfileBars = computed(() => [
+    {
+      label: "新客订单",
+      value: focusedCustomerNewOrderRate.value,
+      meta: `${formatNumber(focusedCustomerStructure.value.newOrders)} 单`,
+      tone: "warm",
+    },
+    {
+      label: "老客订单",
+      value: focusedCustomerReturningOrderRate.value,
+      meta: `${formatNumber(focusedCustomerStructure.value.returningOrders)} 单`,
+      tone: "green",
+    },
+    {
+      label: "会员订单",
+      value: focusedCustomerMemberOrderRate.value,
+      meta: `收入 ${formatMoney(focusedCustomerStructure.value.memberRevenue)}`,
+      tone: "primary",
+    },
+  ]);
+  const customerDonutStyle = computed(() => {
+    const newPercent = focusedCustomerNewOrderRate.value * 100;
+    const memberPercent = Math.min(newPercent + focusedCustomerMemberOrderRate.value * 100, 100);
+    return {
+      background: `conic-gradient(#d7b75f 0 ${newPercent}%, #5b3da7 ${newPercent}% ${memberPercent}%, #7aa08f ${memberPercent}% 100%)`,
+    };
+  });
+  const marginRadarMetrics = computed(() => [
+    {
+      label: "堂食",
+      value: Number(focusedCostMargin.value.dineinMargin || 0),
+      angle: -90,
+      tone: "primary",
+    },
+    {
+      label: "外卖",
+      value: Number(focusedCostMargin.value.deliveryMargin || 0),
+      angle: 30,
+      tone: "warm",
+    },
+    {
+      label: "团购",
+      value: Number(focusedCostMargin.value.groupMargin || 0),
+      angle: 150,
+      tone: "green",
+    },
+  ]);
+  const marginRadarPoints = computed(() =>
+    marginRadarMetrics.value
+      .map((item) => {
+        const score = Math.min(Math.max(item.value / 0.75, 0.08), 1);
+        const radius = 58 * score;
+        const angle = (item.angle * Math.PI) / 180;
+        return `${(90 + Math.cos(angle) * radius).toFixed(1)},${(82 + Math.sin(angle) * radius).toFixed(1)}`;
+      })
+      .join(" "),
+  );
+  const marginRadarDots = computed(() =>
+    marginRadarPoints.value.split(" ").map((point, index) => {
+      const [x, y] = point.split(",");
+      return {
+        key: marginRadarMetrics.value[index]?.label || point,
+        x,
+        y,
+      };
+    }),
+  );
+  const focusedMaterialCostRate = computed(() =>
+    Math.min(Math.max(Number(focusedCostMargin.value.materialCostRate || 0), 0), 1),
+  );
+  const headTailMaxProfit = computed(() =>
+    Math.max(
+      Math.abs(Number(focusedHeadTailGap.value.top20Profit || 0)),
+      Math.abs(Number(focusedHeadTailGap.value.bottom20Profit || 0)),
+      1,
+    ),
+  );
+  const customerStructureMatrix = computed(() =>
+    customerStructure.value.map((item) => {
+      const newOrders = Number(item.newOrders || 0);
+      const returningOrders = Number(item.returningOrders || 0);
+      const memberOrders = Number(item.memberOrders || 0);
+      const displayedTotal = Math.max(newOrders + returningOrders + memberOrders, 1);
+      return {
+        ...item,
+        newShare: newOrders / displayedTotal,
+        returningShare: returningOrders / displayedTotal,
+        memberShare: memberOrders / displayedTotal,
+      };
+    }),
+  );
+  const costMarginHeatRows = computed(() => {
+    const materialRankByZone = new Map(
+      [...costMargins.value]
+        .sort(
+          (left, right) =>
+            Number(right.materialCostRate || 0) - Number(left.materialCostRate || 0),
+        )
+        .slice(0, 3)
+        .map((item, index) => [item.zone, index + 1]),
+    );
+
+    return costMargins.value.map((item) => ({
+      ...item,
+      materialRank: materialRankByZone.get(item.zone) || null,
+      cells: [
+        {
+          key: "material",
+          label: "食材",
+          value: item.materialCostRate,
+          tone: "cost",
+        },
+        {
+          key: "dinein",
+          label: "堂食",
+          value: item.dineinMargin,
+          tone: "margin",
+        },
+        {
+          key: "delivery",
+          label: "外卖",
+          value: item.deliveryMargin,
+          tone: "margin",
+        },
+        {
+          key: "group",
+          label: "团购",
+          value: item.groupMargin,
+          tone: "margin",
+        },
+      ],
+    }));
+  });
+  const headTailRangeRows = computed(() =>
+    headTailGap.value.map((item) => ({
+      ...item,
+      gapShare: Math.min(Number(item.profitGap || 0) / maxHeadTailGap.value, 1),
+    })),
+  );
 
   const maxZoneProfit = computed(() =>
     Math.max(...zoneProfit.value.map((item) => item.profit), 1),
@@ -157,6 +312,24 @@
   );
   const maxCombo = computed(() =>
     Math.max(...comboMargins.value.map((item) => item.passRate), 0.01),
+  );
+  const maxOperatingRevenue = computed(() =>
+    Math.max(...operatingChannels.value.map((item) => item.revenue), 1),
+  );
+  const maxCustomerRate = computed(() =>
+    Math.max(
+      ...customerStructure.value.flatMap((item) => [
+        item.newOrderRate || 0,
+        item.memberRevRate || 0,
+      ]),
+      0.01,
+    ),
+  );
+  const maxMaterialCostRate = computed(() =>
+    Math.max(...costMargins.value.map((item) => item.materialCostRate), 0.01),
+  );
+  const maxHeadTailGap = computed(() =>
+    Math.max(...headTailGap.value.map((item) => item.profitGap), 1),
   );
   const maxQuadrantRevenue = computed(() =>
     Math.max(...overallQuadrants.value.map((item) => item.revenueWan), 1),
@@ -272,6 +445,21 @@
     return "low";
   };
 
+  const getHeatCellStyle = (value, tone) => {
+    const number = Math.min(Math.max(Number(value || 0), 0), 1);
+    const opacity = 0.18 + number * 0.58;
+    if (tone === "cost") {
+      return {
+        backgroundColor: `rgba(216, 199, 137, ${opacity.toFixed(2)})`,
+        color: "rgba(64, 49, 17, 0.86)",
+      };
+    }
+    return {
+      backgroundColor: `rgba(91, 61, 167, ${opacity.toFixed(2)})`,
+      color: number >= 0.48 ? "#fff" : "rgba(22, 18, 37, 0.82)",
+    };
+  };
+
   const formatMetricValue = (item, value) => {
     if (item.format === "percent") return formatPercent(value);
     if (item.format === "price") return Number(value || 0).toFixed(2);
@@ -287,6 +475,12 @@
   const selectDock = (dockKey) => {
     const item = dockItems.find((dockItem) => dockItem.key === dockKey);
     if (item) router.push(item.path);
+  };
+
+  const selectOverviewZone = (zone) => {
+    if (!zone) return;
+    selectedZone.value = zone;
+    activeReportTab.value = "overview";
   };
 
   const loadOverview = async () => {
@@ -580,7 +774,13 @@
                 <span>{{ zoneProfit.length }} 个区域</span>
               </div>
               <div class="bar-list">
-                <div v-for="item in zoneProfit" :key="item.zone" class="bar-row">
+                <button
+                  v-for="item in zoneProfit"
+                  :key="item.zone"
+                  type="button"
+                  class="bar-row interactive-row"
+                  @click="selectOverviewZone(item.zone)"
+                >
                   <div class="row-label">
                     <strong>{{ formatRegionName(item.zone) }}</strong>
                     <span>{{ formatPercent(item.profitRate) }}</span>
@@ -589,7 +789,7 @@
                     <i :style="{ width: `${Math.max((item.profit / maxZoneProfit) * 100, 4)}%` }" />
                   </div>
                   <em>{{ formatMoney(item.profit) }}</em>
-                </div>
+                </button>
               </div>
             </article>
 
@@ -659,7 +859,13 @@
                 <span>{{ formatPercent(kpis.refundRate) }} 退款率</span>
               </div>
               <div class="bar-list compact">
-                <div v-for="item in riskSignals" :key="item.zone" class="bar-row">
+                <button
+                  v-for="item in riskSignals"
+                  :key="item.zone"
+                  type="button"
+                  class="bar-row interactive-row"
+                  @click="selectOverviewZone(item.zone)"
+                >
                   <div class="row-label">
                     <strong>{{ formatRegionName(item.zone) }}</strong>
                     <span>{{ formatPercent(item.lowPriceRate) }}</span>
@@ -667,7 +873,7 @@
                   <div class="bar-track danger">
                     <i :style="{ width: `${Math.max((item.lowPriceRate / maxRisk) * 100, 4)}%` }" />
                   </div>
-                </div>
+                </button>
               </div>
             </article>
 
@@ -677,11 +883,13 @@
                 <span>低于全国均值占比</span>
               </div>
               <div class="health-map">
-                <div
+                <button
                   v-for="item in zoneHealth"
                   :key="`${item.month}-${item.zone}`"
-                  class="health-map-row"
+                  type="button"
+                  class="health-map-row interactive-row"
                   :class="getHealthTone(item.belowNationalRatio)"
+                  @click="selectOverviewZone(item.zone)"
                 >
                   <strong>{{ formatRegionName(item.zone) }}</strong>
                   <div class="health-map-body">
@@ -693,7 +901,7 @@
                       <i :style="{ width: `${Math.max((item.belowNationalRatio / maxZoneHealth) * 100, 4)}%` }" />
                     </div>
                   </div>
-                </div>
+                </button>
               </div>
             </article>
 
@@ -703,7 +911,13 @@
                 <span>实际 vs 理论</span>
               </div>
               <div class="bar-list compact">
-                <div v-for="item in comboMargins" :key="`${item.month}-${item.zone}`" class="bar-row">
+                <button
+                  v-for="item in comboMargins"
+                  :key="`${item.month}-${item.zone}`"
+                  type="button"
+                  class="bar-row interactive-row"
+                  @click="selectOverviewZone(item.zone)"
+                >
                   <div class="row-label">
                     <strong>{{ formatRegionName(item.zone) }}</strong>
                     <span>{{ formatPercent(item.passRate) }}</span>
@@ -711,11 +925,265 @@
                   <div class="bar-track green">
                     <i :style="{ width: `${Math.max((item.passRate / maxCombo) * 100, 4)}%` }" />
                   </div>
-                </div>
+                </button>
               </div>
             </article>
           </section>
         </template>
+
+        <section class="report-grid overview-diagnostic-grid">
+          <article class="panel">
+            <div class="panel-title">
+              <h2>渠道经营结构</h2>
+              <span>收入 / 订单 / 客单价</span>
+            </div>
+            <div class="diagnostic-list">
+              <div
+                v-for="item in operatingChannels"
+                :key="item.channel"
+                class="diagnostic-row"
+              >
+                <div class="diagnostic-label">
+                  <strong>{{ item.channel }}</strong>
+                  <span>{{ formatNumber(item.orders) }} 单</span>
+                </div>
+                <div class="diagnostic-body">
+                  <div class="row-label">
+                    <span>{{ formatMoney(item.revenue) }}</span>
+                    <em>客单 {{ Number(item.avgOrderValue || 0).toFixed(1) }}</em>
+                  </div>
+                  <div class="bar-track">
+                    <i :style="{ width: `${Math.max((item.revenue / maxOperatingRevenue) * 100, 4)}%` }" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-title">
+              <h2>客群结构</h2>
+              <span>新客 / 会员</span>
+            </div>
+            <div v-if="isZoneFocused" class="focused-diagnostic">
+              <div class="audience-portrait">
+                <div class="audience-donut" :style="customerDonutStyle">
+                  <div>
+                    <strong>{{ formatPercent(focusedCustomerStructure.newOrderRate) }}</strong>
+                    <span>新客订单</span>
+                  </div>
+                </div>
+                <div class="audience-profile-bars">
+                  <div
+                    v-for="item in customerProfileBars"
+                    :key="item.label"
+                    class="audience-profile-row"
+                  >
+                    <span>
+                      <b>{{ item.label }}</b>
+                      <em>{{ formatPercent(item.value) }}</em>
+                    </span>
+                    <div class="bar-track" :class="item.tone">
+                      <i :style="{ width: `${Math.max(item.value * 100, 4)}%` }" />
+                    </div>
+                    <small>{{ item.meta }}</small>
+                  </div>
+                </div>
+              </div>
+              <div class="audience-insights">
+                <div class="audience-insight-card warm">
+                  <span>新客收入</span>
+                  <strong>{{ formatPercent(focusedCustomerStructure.newRevRate) }}</strong>
+                </div>
+                <div class="audience-insight-card primary">
+                  <span>会员收入</span>
+                  <strong>{{ formatPercent(focusedCustomerStructure.memberRevRate) }}</strong>
+                </div>
+                <div class="audience-insight-card total">
+                  <span>总收入</span>
+                  <strong>{{ formatMoney(focusedCustomerStructure.totalRevenue) }}</strong>
+                </div>
+              </div>
+            </div>
+            <div v-else class="audience-matrix">
+              <button
+                v-for="item in customerStructureMatrix"
+                :key="item.zone"
+                type="button"
+                class="audience-matrix-row interactive-row"
+                @click="selectOverviewZone(item.zone)"
+              >
+                <div class="audience-matrix-label">
+                  <strong>{{ formatRegionName(item.zone) }}</strong>
+                  <span>会员收入 {{ formatPercent(item.memberRevRate) }}</span>
+                </div>
+                <div class="audience-stack" :title="`${formatRegionName(item.zone)} 客群结构`">
+                  <i class="new" :style="{ width: `${Math.max(item.newShare * 100, 4)}%` }" />
+                  <i class="returning" :style="{ width: `${Math.max(item.returningShare * 100, 4)}%` }" />
+                  <i class="member" :style="{ width: `${Math.max(item.memberShare * 100, 4)}%` }" />
+                </div>
+                <div class="audience-matrix-meta">
+                  <span>新客 {{ formatPercent(item.newOrderRate) }}</span>
+                  <em>新客收入 {{ formatPercent(item.newRevRate) }}</em>
+                </div>
+              </button>
+              <div class="audience-matrix-legend">
+                <span><i class="new" />新客</span>
+                <span><i class="returning" />老客</span>
+                <span><i class="member" />会员</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-title">
+              <h2>成本与渠道毛利</h2>
+              <span>食材成本 / 渠道毛利</span>
+            </div>
+            <div v-if="isZoneFocused" class="focused-diagnostic">
+              <div class="margin-radar-card">
+                <svg
+                  class="margin-radar"
+                  viewBox="0 0 180 150"
+                  role="img"
+                  aria-label="渠道毛利雷达图"
+                >
+                  <polygon class="radar-grid outer" points="90,24 148,116 32,116" />
+                  <polygon class="radar-grid inner" points="90,52 124,104 56,104" />
+                  <line x1="90" y1="82" x2="90" y2="24" />
+                  <line x1="90" y1="82" x2="148" y2="116" />
+                  <line x1="90" y1="82" x2="32" y2="116" />
+                  <polygon class="radar-area" :points="marginRadarPoints" />
+                  <circle
+                    v-for="point in marginRadarDots"
+                    :key="point.key"
+                    :cx="point.x"
+                    :cy="point.y"
+                    r="3.6"
+                  />
+                  <text x="90" y="16" text-anchor="middle">堂食</text>
+                  <text x="160" y="130" text-anchor="end">外卖</text>
+                  <text x="20" y="130">团购</text>
+                </svg>
+                <div class="cost-pressure">
+                  <span>
+                    <b>食材成本率</b>
+                    <em>{{ formatPercent(focusedCostMargin.materialCostRate) }}</em>
+                  </span>
+                  <div class="bar-track danger">
+                    <i :style="{ width: `${Math.max(focusedMaterialCostRate * 100, 4)}%` }" />
+                  </div>
+                  <small>{{ currentZoneName }}成本压力画像</small>
+                </div>
+              </div>
+              <div class="margin-radar-legend">
+                <div
+                  v-for="item in marginRadarMetrics"
+                  :key="`${item.label}-focused-margin`"
+                  class="margin-channel-card"
+                  :class="item.tone"
+                >
+                  <span>{{ item.label }}</span>
+                  <strong>{{ formatPercent(item.value) }}</strong>
+                  <div class="bar-track" :class="item.tone">
+                    <i :style="{ width: `${Math.max(item.value * 100, 4)}%` }" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="heat-matrix">
+              <div class="heat-matrix-header">
+                <span>区域</span>
+                <span>食材</span>
+                <span>堂食</span>
+                <span>外卖</span>
+                <span>团购</span>
+              </div>
+              <button
+                v-for="item in costMarginHeatRows"
+                :key="item.zone"
+                type="button"
+                class="heat-matrix-row interactive-row"
+                @click="selectOverviewZone(item.zone)"
+              >
+                <strong>{{ formatRegionName(item.zone) }}</strong>
+                <div
+                  v-for="cell in item.cells"
+                  :key="cell.key"
+                  class="heat-cell"
+                  :class="[cell.tone, { 'ranked-cell': cell.key === 'material' && item.materialRank }]"
+                  :style="getHeatCellStyle(cell.value, cell.tone)"
+                >
+                  <span>{{ formatPercent(cell.value) }}</span>
+                  <b
+                    v-if="cell.key === 'material' && item.materialRank"
+                    class="heat-rank-badge"
+                  >
+                    {{ item.materialRank }}
+                  </b>
+                </div>
+              </button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-title">
+              <h2>门店头尾差距</h2>
+              <span>Top20 vs Bottom20</span>
+            </div>
+            <div v-if="isZoneFocused" class="focused-diagnostic">
+              <div class="head-tail-visual">
+                <div class="profit-column top">
+                  <span>头部 Top20</span>
+                  <div class="profit-column-track">
+                    <i :style="{ height: `${Math.max((Math.abs(Number(focusedHeadTailGap.top20Profit || 0)) / headTailMaxProfit) * 100, 8)}%` }" />
+                  </div>
+                  <strong>{{ formatMoney(focusedHeadTailGap.top20Profit) }}</strong>
+                </div>
+                <div class="gap-bridge">
+                  <span>利润差距</span>
+                  <strong>{{ formatMoney(focusedHeadTailGap.profitGap) }}</strong>
+                  <small>Top20 - Bottom20</small>
+                  <em>{{ selectedMonth || focusedHeadTailGap.month }}</em>
+                </div>
+                <div class="profit-column bottom">
+                  <span>尾部 Bottom20</span>
+                  <div class="profit-column-track">
+                    <i :style="{ height: `${Math.max((Math.abs(Number(focusedHeadTailGap.bottom20Profit || 0)) / headTailMaxProfit) * 100, 8)}%` }" />
+                  </div>
+                  <strong>{{ formatMoney(focusedHeadTailGap.bottom20Profit) }}</strong>
+                </div>
+              </div>
+              <div class="repair-meter">
+                <span>
+                  <b>尾部门店修复空间</b>
+                  <em>{{ formatMoney(focusedHeadTailGap.profitGap) }}</em>
+                </span>
+                <div class="bar-track green">
+                  <i :style="{ width: `${Math.max((Number(focusedHeadTailGap.profitGap || 0) / maxHeadTailGap) * 100, 4)}%` }" />
+                </div>
+              </div>
+            </div>
+            <div v-else class="head-tail-range-list">
+              <button
+                v-for="item in headTailRangeRows"
+                :key="`${item.month}-${item.zone}`"
+                type="button"
+                class="head-tail-range-row interactive-row"
+                @click="selectOverviewZone(item.zone)"
+              >
+                <div class="head-tail-range-label">
+                  <strong>{{ formatRegionName(item.zone) }}</strong>
+                  <span>{{ formatMoney(item.bottom20Profit) }} → {{ formatMoney(item.top20Profit) }}</span>
+                </div>
+                <div class="head-tail-range-track">
+                  <i :style="{ width: `${Math.max(item.gapShare * 100, 4)}%` }" />
+                </div>
+                <em>{{ formatMoney(item.profitGap) }}</em>
+              </button>
+            </div>
+          </article>
+        </section>
       </section>
 
       <section v-else-if="activeReportTab === 'quadrant'" class="quadrant-section">
@@ -1170,6 +1638,11 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .overview-diagnostic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 14px;
+  }
+
   .zone-focus-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1425,6 +1898,7 @@
   .bar-list,
   .channel-list,
   .health-map,
+  .diagnostic-list,
   .driver-list,
   .gap-list,
   .structure-flow-list,
@@ -1441,6 +1915,25 @@
     gap: 10px;
   }
 
+  .interactive-row {
+    width: 100%;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.16s ease, transform 0.16s ease;
+  }
+
+  .interactive-row:hover,
+  .interactive-row:focus-visible {
+    background: rgba(123, 117, 173, 0.07);
+    outline: none;
+    transform: translateX(2px);
+  }
+
   .compact .bar-row {
     grid-template-columns: minmax(120px, 1fr) minmax(110px, 1.2fr);
   }
@@ -1450,6 +1943,642 @@
     grid-template-columns: minmax(130px, 1fr) minmax(120px, 1.15fr);
     gap: 10px;
     align-items: center;
+  }
+
+  .diagnostic-row {
+    display: grid;
+    grid-template-columns: minmax(110px, 0.7fr) minmax(180px, 1.3fr);
+    align-items: center;
+    gap: 12px;
+    min-height: 42px;
+  }
+
+  .diagnostic-label {
+    min-width: 0;
+  }
+
+  .diagnostic-label strong {
+    display: block;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .diagnostic-label span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .diagnostic-body {
+    min-width: 0;
+  }
+
+  .diagnostic-body .row-label {
+    margin-bottom: 5px;
+  }
+
+  .diagnostic-body em {
+    color: var(--muted);
+    font-size: 11px;
+    font-style: normal;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .focused-diagnostic {
+    display: grid;
+    gap: 12px;
+  }
+
+  .focused-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .focused-metric-grid div,
+  .split-diagnostic,
+  .channel-margin-list div,
+  .gap-hero {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid rgba(123, 117, 173, 0.16);
+    border-radius: 8px;
+    background: rgba(250, 249, 255, 0.72);
+  }
+
+  .focused-metric-grid span,
+  .split-diagnostic span,
+  .channel-margin-list span,
+  .gap-hero span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .focused-metric-grid strong,
+  .channel-margin-list strong,
+  .gap-hero strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--text);
+    font-size: 20px;
+    line-height: 1.1;
+  }
+
+  .focused-metric-grid.two-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .split-diagnostic {
+    display: grid;
+    gap: 8px;
+  }
+
+  .split-diagnostic span {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .split-diagnostic b {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .split-diagnostic em {
+    color: var(--soft-text);
+    font-size: 12px;
+    font-style: normal;
+    white-space: nowrap;
+  }
+
+  .channel-margin-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .channel-margin-list div {
+    display: grid;
+    gap: 7px;
+  }
+
+  .compact-hero {
+    padding: 14px;
+  }
+
+  .compact-hero strong {
+    font-size: 28px;
+  }
+
+  .gap-hero {
+    background: linear-gradient(135deg, rgba(36, 142, 93, 0.08), rgba(255, 255, 255, 0.92));
+  }
+
+  .gap-hero em {
+    display: block;
+    margin-top: 6px;
+    color: var(--soft-text);
+    font-size: 12px;
+    font-style: normal;
+  }
+
+  .audience-portrait {
+    display: grid;
+    grid-template-columns: 128px minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+  }
+
+  .audience-donut {
+    display: grid;
+    width: 128px;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(123, 117, 173, 0.14);
+  }
+
+  .audience-donut div {
+    display: grid;
+    width: 82px;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.94);
+    text-align: center;
+  }
+
+  .audience-donut strong {
+    color: var(--text);
+    font-size: 21px;
+    line-height: 1;
+  }
+
+  .audience-donut span,
+  .audience-profile-row small,
+  .cost-pressure small {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .audience-profile-bars {
+    display: grid;
+    gap: 9px;
+  }
+
+  .audience-profile-row {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .audience-profile-row > span,
+  .cost-pressure > span,
+  .repair-meter > span {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .audience-profile-row b,
+  .cost-pressure b,
+  .repair-meter b {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .audience-profile-row em,
+  .cost-pressure em,
+  .repair-meter em {
+    color: var(--soft-text);
+    font-style: normal;
+    white-space: nowrap;
+  }
+
+  .audience-insights,
+  .margin-radar-legend {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .audience-insight-card,
+  .margin-channel-card {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+    overflow: hidden;
+    padding: 10px;
+    border: 1px solid rgba(123, 117, 173, 0.14);
+    border-radius: 8px;
+    background: rgba(250, 249, 255, 0.72);
+  }
+
+  .audience-insight-card span,
+  .margin-channel-card span {
+    color: var(--soft-text);
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .audience-insight-card strong,
+  .margin-channel-card strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .audience-insight-card.warm {
+    background: rgba(216, 199, 137, 0.12);
+  }
+
+  .audience-insight-card.primary {
+    background: rgba(91, 61, 167, 0.08);
+  }
+
+  .audience-insight-card.total {
+    background: rgba(36, 142, 93, 0.08);
+  }
+
+  .margin-radar-card {
+    display: grid;
+    grid-template-columns: 174px minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+  }
+
+  .margin-radar {
+    width: 100%;
+    max-width: 174px;
+    overflow: visible;
+  }
+
+  .margin-radar .radar-grid {
+    fill: rgba(91, 61, 167, 0.04);
+    stroke: rgba(123, 117, 173, 0.18);
+    stroke-width: 1;
+  }
+
+  .margin-radar .radar-grid.inner {
+    fill: none;
+  }
+
+  .margin-radar line {
+    stroke: rgba(123, 117, 173, 0.16);
+    stroke-width: 1;
+  }
+
+  .margin-radar .radar-area {
+    fill: rgba(91, 61, 167, 0.22);
+    stroke: var(--primary);
+    stroke-linejoin: round;
+    stroke-width: 2.5;
+  }
+
+  .margin-radar circle {
+    fill: var(--primary);
+    stroke: #fff;
+    stroke-width: 2;
+  }
+
+  .margin-radar text {
+    fill: var(--muted);
+    font-size: 11px;
+  }
+
+  .cost-pressure,
+  .repair-meter {
+    display: grid;
+    gap: 9px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid rgba(123, 117, 173, 0.14);
+    border-radius: 8px;
+    background: rgba(250, 249, 255, 0.72);
+  }
+
+  .head-tail-visual {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 118px minmax(0, 1fr);
+    align-items: end;
+    gap: 12px;
+    min-height: 182px;
+  }
+
+  .profit-column {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .profit-column span {
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .profit-column strong {
+    color: var(--text);
+    font-size: 18px;
+  }
+
+  .profit-column-track {
+    display: flex;
+    align-items: flex-end;
+    width: 56px;
+    height: 118px;
+    overflow: hidden;
+    border-radius: 999px 999px 8px 8px;
+    background: rgba(123, 117, 173, 0.1);
+  }
+
+  .profit-column-track i {
+    display: block;
+    width: 100%;
+    border-radius: inherit;
+    background: linear-gradient(180deg, var(--primary), rgba(91, 61, 167, 0.68));
+  }
+
+  .profit-column.bottom .profit-column-track i {
+    background: linear-gradient(180deg, var(--success), rgba(36, 142, 93, 0.68));
+  }
+
+  .gap-bridge {
+    align-self: center;
+    padding: 14px 12px;
+    border: 1px solid rgba(91, 61, 167, 0.18);
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at 50% 10%, rgba(91, 61, 167, 0.12), transparent 58%),
+      rgba(250, 249, 255, 0.86);
+    box-shadow: inset 0 0 0 6px rgba(91, 61, 167, 0.035);
+    text-align: center;
+  }
+
+  .gap-bridge span,
+  .gap-bridge small,
+  .gap-bridge em {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    font-style: normal;
+  }
+
+  .gap-bridge strong {
+    display: block;
+    margin: 7px 0 5px;
+    color: var(--primary);
+    font-size: 21px;
+    line-height: 1.1;
+  }
+
+  .gap-bridge small {
+    color: var(--soft-text);
+    font-size: 10px;
+  }
+
+  .audience-matrix {
+    display: grid;
+    gap: 11px;
+  }
+
+  .audience-matrix-row {
+    display: grid;
+    grid-template-columns: minmax(84px, 0.55fr) minmax(160px, 1fr) minmax(106px, 0.7fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  .audience-matrix-label,
+  .audience-matrix-meta,
+  .head-tail-range-label {
+    min-width: 0;
+  }
+
+  .audience-matrix-label strong,
+  .head-tail-range-label strong {
+    display: block;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .audience-matrix-label span,
+  .audience-matrix-meta span,
+  .audience-matrix-meta em,
+  .head-tail-range-label span {
+    display: block;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 11px;
+    font-style: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .audience-stack {
+    display: flex;
+    height: 13px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--track);
+    transition: box-shadow 0.16s ease, filter 0.16s ease, transform 0.16s ease;
+  }
+
+  .audience-matrix-row:hover .audience-stack,
+  .audience-matrix-row:focus-visible .audience-stack {
+    box-shadow: 0 7px 16px rgba(91, 61, 167, 0.14);
+    filter: saturate(1.08);
+    transform: scaleX(1.015);
+    transform-origin: left center;
+  }
+
+  .audience-stack i,
+  .audience-matrix-legend i {
+    display: block;
+    height: 100%;
+  }
+
+  .audience-stack .new,
+  .audience-matrix-legend .new {
+    background: var(--accent);
+  }
+
+  .audience-stack .returning,
+  .audience-matrix-legend .returning {
+    background: var(--success);
+  }
+
+  .audience-stack .member,
+  .audience-matrix-legend .member {
+    background: var(--primary);
+  }
+
+  .audience-matrix-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 3px;
+  }
+
+  .audience-matrix-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--soft-text);
+    font-size: 11px;
+  }
+
+  .audience-matrix-legend i {
+    width: 16px;
+    height: 7px;
+    border-radius: 999px;
+  }
+
+  .heat-matrix {
+    display: grid;
+    gap: 8px;
+  }
+
+  .heat-matrix-header,
+  .heat-matrix-row {
+    display: grid;
+    grid-template-columns: minmax(62px, 0.78fr) repeat(4, minmax(48px, 1fr));
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  .heat-matrix-header span {
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .heat-matrix-header span:first-child,
+  .heat-matrix-row strong {
+    text-align: left;
+  }
+
+  .heat-matrix-row strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .heat-cell {
+    position: relative;
+    display: grid;
+    min-height: 31px;
+    place-items: center;
+    border: 1px solid rgba(123, 117, 173, 0.1);
+    border-radius: 6px;
+    transition: box-shadow 0.16s ease, filter 0.16s ease, transform 0.16s ease;
+  }
+
+  .heat-matrix-row:hover .heat-cell,
+  .heat-matrix-row:focus-visible .heat-cell {
+    box-shadow: 0 7px 14px rgba(91, 61, 167, 0.12);
+    filter: saturate(1.08);
+    transform: translateY(-1px);
+  }
+
+  .heat-cell span {
+    color: inherit;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .heat-rank-badge {
+    position: absolute;
+    top: -7px;
+    right: -6px;
+    display: grid;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 4px 10px rgba(91, 61, 167, 0.2);
+  }
+
+  .head-tail-range-list {
+    display: grid;
+    gap: 11px;
+  }
+
+  .head-tail-range-row {
+    display: grid;
+    grid-template-columns: minmax(92px, 0.72fr) minmax(150px, 1fr) 68px;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .head-tail-range-track {
+    height: 22px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(36, 142, 93, 0.08), rgba(91, 61, 167, 0.08));
+  }
+
+  .head-tail-range-track i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(36, 142, 93, 0.72), rgba(91, 61, 167, 0.82));
+  }
+
+  .head-tail-range-row > em {
+    color: var(--primary);
+    font-size: 12px;
+    font-style: normal;
+    text-align: right;
+    white-space: nowrap;
   }
 
   .gap-list div {
@@ -2030,6 +3159,7 @@
 
     .main-grid,
     .detail-grid,
+    .overview-diagnostic-grid,
     .zone-focus-grid,
     .zone-focus-wide-grid,
     .quadrant-grid,
@@ -2077,6 +3207,7 @@
     .kpi-grid,
     .main-grid,
     .detail-grid,
+    .overview-diagnostic-grid,
     .zone-focus-grid,
     .zone-focus-wide-grid,
     .quadrant-grid,
@@ -2094,6 +3225,21 @@
     .compact-list,
     .zone-trend-summary {
       grid-template-columns: 1fr;
+    }
+
+    .audience-matrix-row,
+    .head-tail-range-row {
+      grid-template-columns: 1fr;
+      gap: 7px;
+    }
+
+    .heat-matrix-header,
+    .heat-matrix-row {
+      grid-template-columns: minmax(54px, 0.72fr) repeat(4, minmax(44px, 1fr));
+    }
+
+    .head-tail-range-row > em {
+      text-align: left;
     }
   }
 </style>

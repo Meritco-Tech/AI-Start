@@ -528,8 +528,7 @@
     <main class="report-shell" v-loading="isLoading">
       <header class="report-header">
         <div>
-          <h1>华莱士经营报表</h1>
-          <p>{{ catalog?.dataDir || "/Users/wentaoding/Downloads/database" }}</p>
+          <h1>企业经营报表</h1>
         </div>
       </header>
 
@@ -1682,16 +1681,6 @@
     font-size: 28px;
     font-weight: 700;
     letter-spacing: 0;
-  }
-
-  .report-header p {
-    max-width: 720px;
-    margin: 8px 0 0;
-    overflow: hidden;
-    color: var(--muted);
-    font-size: 13px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .filters {

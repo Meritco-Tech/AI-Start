@@ -6,6 +6,7 @@ This directory stores Codex-written change-history notes for file-changing tasks
 
 | Date | Change | File |
 | --- | --- | --- |
+| 2026-06-05 | Updated the Wallace report header title and removed the visible data-source path. | [2026-06-05-update-wallace-report-header-title.md](2026-06-05-update-wallace-report-header-title.md) |
 | 2026-06-05 | Added row-by-row entry animations for Wallace overview and quadrant report pages. | [2026-06-05-add-wallace-report-entry-motion.md](2026-06-05-add-wallace-report-entry-motion.md) |
 | 2026-06-05 | Centered and slightly reduced the Wallace selected-zone audience donut label. | [2026-06-05-center-wallace-audience-donut-label.md](2026-06-05-center-wallace-audience-donut-label.md) |
 | 2026-06-05 | Aligned and lowered the Wallace selected-zone core and pricing divider heights. | [2026-06-05-align-wallace-top-zone-dividers.md](2026-06-05-align-wallace-top-zone-dividers.md) |

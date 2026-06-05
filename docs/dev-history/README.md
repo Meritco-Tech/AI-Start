@@ -6,6 +6,18 @@ This directory stores Codex-written change-history notes for file-changing tasks
 
 | Date | Change | File |
 | --- | --- | --- |
+| 2026-06-05 | Centered and slightly reduced the Wallace selected-zone audience donut label. | [2026-06-05-center-wallace-audience-donut-label.md](2026-06-05-center-wallace-audience-donut-label.md) |
+| 2026-06-05 | Aligned and lowered the Wallace selected-zone core and pricing divider heights. | [2026-06-05-align-wallace-top-zone-dividers.md](2026-06-05-align-wallace-top-zone-dividers.md) |
+| 2026-06-04 | Removed the Wallace selected-zone package margin pass meter frame and background. | [2026-06-04-remove-wallace-pass-meter-frame.md](2026-06-04-remove-wallace-pass-meter-frame.md) |
+| 2026-06-04 | Removed the Wallace selected-zone profit hero frame and redesigned it as a lightweight accent metric. | [2026-06-04-redesign-wallace-zone-profit-hero.md](2026-06-04-redesign-wallace-zone-profit-hero.md) |
+| 2026-06-04 | Resized selected-zone Wallace customer structure so its divider aligns with the cost card. | [2026-06-04-align-wallace-audience-divider.md](2026-06-04-align-wallace-audience-divider.md) |
+| 2026-06-04 | Aligned selected-zone customer, cost, and head-tail divider heights in Wallace reports. | [2026-06-04-align-wallace-zone-analysis-dividers.md](2026-06-04-align-wallace-zone-analysis-dividers.md) |
+| 2026-06-04 | Changed Wallace selected-zone six analysis modules to a three-column grid without changing all-region layout. | [2026-06-04-layout-wallace-zone-analysis-grid.md](2026-06-04-layout-wallace-zone-analysis-grid.md) |
+| 2026-06-04 | Aligned the Wallace selected-zone head-tail divider with the neighboring cost section and reduced its chart size. | [2026-06-04-align-wallace-head-tail-divider.md](2026-06-04-align-wallace-head-tail-divider.md) |
+| 2026-06-04 | Added subtle separators to Wallace selected-zone customer and head-tail diagnostic sections. | [2026-06-04-add-wallace-focused-section-dividers.md](2026-06-04-add-wallace-focused-section-dividers.md) |
+| 2026-06-04 | Redesigned Wallace selected-zone summary blocks for stronger visual hierarchy. | [2026-06-04-redesign-wallace-selected-zone-summaries.md](2026-06-04-redesign-wallace-selected-zone-summaries.md) |
+| 2026-06-04 | Removed inner borders from Wallace selected-zone metric and diagnostic summary blocks. | [2026-06-04-remove-wallace-selected-zone-inner-borders.md](2026-06-04-remove-wallace-selected-zone-inner-borders.md) |
+| 2026-06-04 | Removed inner backgrounds and frames from Wallace selected-region diagnostic summaries. | [2026-06-04-remove-wallace-focused-inner-backgrounds.md](2026-06-04-remove-wallace-focused-inner-backgrounds.md) |
 | 2026-06-04 | Refined Wallace focused summary cards and moved all-region cost Top 1/2/3 markers into the heat matrix. | [2026-06-04-refine-wallace-focused-summary-and-heat-ranks.md](2026-06-04-refine-wallace-focused-summary-and-heat-ranks.md) |
 | 2026-06-04 | Added hover feedback to Wallace all-region customer and cost diagnostic rows. | [2026-06-04-add-hover-effects-to-wallace-diagnostics.md](2026-06-04-add-hover-effects-to-wallace-diagnostics.md) |
 | 2026-06-04 | Made Wallace all-region customer and cost diagnostic rows clickable and centered their legends. | [2026-06-04-add-clickable-wallace-all-region-diagnostics.md](2026-06-04-add-clickable-wallace-all-region-diagnostics.md) |

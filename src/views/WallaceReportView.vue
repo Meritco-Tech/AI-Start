@@ -650,16 +650,31 @@
               </div>
               <div class="zone-risk-stack">
                 <div class="zone-risk-item danger">
-                  <span>异常低价率</span>
-                  <strong>{{ formatPercent(focusedRiskSignal.lowPriceRate ?? kpis.lowPriceRate) }}</strong>
+                  <div class="zone-risk-row">
+                    <span>异常低价率</span>
+                    <strong>{{ formatPercent(focusedRiskSignal.lowPriceRate ?? kpis.lowPriceRate) }}</strong>
+                  </div>
+                  <div class="bar-track danger">
+                    <i :style="{ width: `${Math.max(Number((focusedRiskSignal.lowPriceRate ?? kpis.lowPriceRate) || 0) * 100, 4)}%` }" />
+                  </div>
                 </div>
                 <div class="zone-risk-item">
-                  <span>退款率</span>
-                  <strong>{{ formatPercent(focusedRiskSignal.refundRate ?? kpis.refundRate) }}</strong>
+                  <div class="zone-risk-row">
+                    <span>退款率</span>
+                    <strong>{{ formatPercent(focusedRiskSignal.refundRate ?? kpis.refundRate) }}</strong>
+                  </div>
+                  <div class="bar-track">
+                    <i :style="{ width: `${Math.max(Number((focusedRiskSignal.refundRate ?? kpis.refundRate) || 0) * 100, 4)}%` }" />
+                  </div>
                 </div>
                 <div class="zone-risk-item">
-                  <span>低于全国均值门店占比</span>
-                  <strong>{{ formatPercent(focusedZoneHealth.belowNationalRatio) }}</strong>
+                  <div class="zone-risk-row">
+                    <span>低于全国均值门店占比</span>
+                    <strong>{{ formatPercent(focusedZoneHealth.belowNationalRatio) }}</strong>
+                  </div>
+                  <div class="bar-track">
+                    <i :style="{ width: `${Math.max(Number(focusedZoneHealth.belowNationalRatio || 0) * 100, 4)}%` }" />
+                  </div>
                 </div>
               </div>
               <p class="zone-note">
@@ -696,74 +711,6 @@
             </article>
           </section>
 
-          <section class="report-grid zone-focus-wide-grid">
-            <article class="panel">
-              <div class="panel-title">
-                <h2>渠道收入结构</h2>
-                <span>{{ selectedMonth || "全部月份" }}</span>
-              </div>
-              <div class="channel-list">
-                <div v-for="item in channelItems" :key="item.label" class="channel-row">
-                  <div class="channel-icon">
-                    <el-icon><Grid /></el-icon>
-                  </div>
-                  <div class="channel-body">
-                    <div class="row-label">
-                      <strong>{{ item.label }}</strong>
-                      <span>{{ formatMoney(item.revenue) }}</span>
-                    </div>
-                    <div class="bar-track warm">
-                      <i :style="{ width: `${Math.max((item.revenue / maxChannelRevenue) * 100, 4)}%` }" />
-                    </div>
-                    <small>毛利率 {{ formatPercent(item.profitRate) }}</small>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-title">
-                <h2>月度走势</h2>
-                <span>
-                  环比观察 {{ formatPercent(focusedTrendLift) }}
-                </span>
-              </div>
-              <div class="trend-chart">
-                <svg
-                  :viewBox="`0 0 ${trendChart.width} ${trendChart.height}`"
-                  role="img"
-                  aria-label="选中区域月度营收趋势"
-                >
-                  <polyline class="trend-line-shadow" :points="trendChart.points" />
-                  <polyline class="trend-line" :points="trendChart.points" />
-                  <circle
-                    v-for="point in trendChart.points.split(' ').filter(Boolean)"
-                    :key="point"
-                    :cx="point.split(',')[0]"
-                    :cy="point.split(',')[1]"
-                    r="3.8"
-                  />
-                </svg>
-                <div class="trend-axis">
-                  <span v-for="item in monthlyTrend" :key="item.month">{{ item.month.slice(4) }}月</span>
-                </div>
-                <div class="zone-trend-summary">
-                  <div>
-                    <span>期初营收</span>
-                    <strong>{{ formatMoney(focusedTrendStart.revenue) }}</strong>
-                  </div>
-                  <div>
-                    <span>期末营收</span>
-                    <strong>{{ formatMoney(focusedTrendEnd.revenue) }}</strong>
-                  </div>
-                  <div>
-                    <span>期末毛利率</span>
-                    <strong>{{ formatPercent(focusedTrendEnd.profitRate) }}</strong>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </section>
         </template>
 
         <template v-else>
@@ -931,7 +878,74 @@
           </section>
         </template>
 
-        <section class="report-grid overview-diagnostic-grid">
+        <section class="report-grid overview-diagnostic-grid" :class="{ 'zone-focused-analysis-grid': isZoneFocused }">
+          <article v-if="isZoneFocused" class="panel">
+            <div class="panel-title">
+              <h2>渠道收入结构</h2>
+              <span>{{ selectedMonth || "全部月份" }}</span>
+            </div>
+            <div class="channel-list">
+              <div v-for="item in channelItems" :key="item.label" class="channel-row">
+                <div class="channel-icon">
+                  <el-icon><Grid /></el-icon>
+                </div>
+                <div class="channel-body">
+                  <div class="row-label">
+                    <strong>{{ item.label }}</strong>
+                    <span>{{ formatMoney(item.revenue) }}</span>
+                  </div>
+                  <div class="bar-track warm">
+                    <i :style="{ width: `${Math.max((item.revenue / maxChannelRevenue) * 100, 4)}%` }" />
+                  </div>
+                  <small>毛利率 {{ formatPercent(item.profitRate) }}</small>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article v-if="isZoneFocused" class="panel">
+            <div class="panel-title">
+              <h2>月度走势</h2>
+              <span>
+                环比观察 {{ formatPercent(focusedTrendLift) }}
+              </span>
+            </div>
+            <div class="trend-chart">
+              <svg
+                :viewBox="`0 0 ${trendChart.width} ${trendChart.height}`"
+                role="img"
+                aria-label="选中区域月度营收趋势"
+              >
+                <polyline class="trend-line-shadow" :points="trendChart.points" />
+                <polyline class="trend-line" :points="trendChart.points" />
+                <circle
+                  v-for="point in trendChart.points.split(' ').filter(Boolean)"
+                  :key="point"
+                  :cx="point.split(',')[0]"
+                  :cy="point.split(',')[1]"
+                  r="3.8"
+                />
+              </svg>
+              <div class="trend-axis">
+                <span v-for="item in monthlyTrend" :key="item.month">{{ item.month.slice(4) }}月</span>
+              </div>
+              <div class="zone-trend-summary">
+                <div>
+                  <span>期初营收</span>
+                  <strong>{{ formatMoney(focusedTrendStart.revenue) }}</strong>
+                </div>
+                <div>
+                  <span>期末营收</span>
+                  <strong>{{ formatMoney(focusedTrendEnd.revenue) }}</strong>
+                </div>
+                <div>
+                  <span>期末毛利率</span>
+                  <strong>{{ formatPercent(focusedTrendEnd.profitRate) }}</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
           <article class="panel">
             <div class="panel-title">
               <h2>渠道经营结构</h2>
@@ -1643,6 +1657,50 @@
     margin-top: 14px;
   }
 
+  .zone-focused-analysis-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .zone-focused-analysis-grid .audience-portrait,
+  .zone-focused-analysis-grid .margin-radar-card,
+  .zone-focused-analysis-grid .head-tail-visual {
+    box-sizing: border-box;
+    min-height: 164px;
+  }
+
+  .zone-focused-analysis-grid .audience-portrait {
+    height: 164px;
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
+
+  .zone-focused-analysis-grid .audience-donut {
+    width: 112px;
+  }
+
+  .zone-focused-analysis-grid .audience-donut div {
+    align-content: center;
+    gap: 3px;
+    justify-items: center;
+    width: 72px;
+  }
+
+  .zone-focused-analysis-grid .audience-donut strong {
+    font-size: 17px;
+  }
+
+  .zone-focused-analysis-grid .audience-profile-bars {
+    gap: 6px;
+  }
+
+  .zone-focused-analysis-grid .audience-profile-row {
+    gap: 3px;
+  }
+
+  .zone-focused-analysis-grid .audience-profile-row small {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
   .zone-focus-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1661,10 +1719,25 @@
   }
 
   .zone-hero-metric {
-    padding: 18px;
-    border: 1px solid rgba(91, 61, 167, 0.14);
-    border-radius: 8px;
-    background: linear-gradient(135deg, rgba(91, 61, 167, 0.09), rgba(255, 255, 255, 0.9));
+    display: grid;
+    position: relative;
+    gap: 7px;
+    box-sizing: border-box;
+    min-height: 120px;
+    padding: 6px 0 8px 18px;
+    border: 0;
+    background: transparent;
+  }
+
+  .zone-hero-metric::before {
+    position: absolute;
+    top: 8px;
+    bottom: 10px;
+    left: 0;
+    width: 4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--primary), var(--success));
+    content: "";
   }
 
   .zone-hero-metric span,
@@ -1678,15 +1751,16 @@
 
   .zone-hero-metric strong {
     display: block;
-    margin-top: 6px;
+    margin-top: 0;
     color: var(--text);
-    font-size: 34px;
+    font-size: 38px;
+    font-weight: 700;
     line-height: 1;
   }
 
   .zone-hero-metric em {
     display: block;
-    margin-top: 8px;
+    margin-top: 0;
     color: var(--soft-text);
     font-size: 12px;
     font-style: normal;
@@ -1694,19 +1768,46 @@
 
   .zone-metric-list {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin: 16px 0 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 18px 0 0;
+    padding-top: 14px;
+    background: linear-gradient(var(--line), var(--line)) top / 100% 1px no-repeat;
   }
 
   .zone-metric-list div,
   .zone-risk-item,
   .zone-trend-summary div {
+    position: relative;
     min-width: 0;
-    padding: 12px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.74);
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .zone-metric-list div {
+    display: grid;
+    gap: 4px;
+    padding-left: 12px;
+  }
+
+  .zone-metric-list div::before {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: 3px;
+    border-radius: 999px;
+    background: var(--primary);
+    content: "";
+  }
+
+  .zone-metric-list div:nth-child(2)::before {
+    background: var(--success);
+  }
+
+  .zone-metric-list div:nth-child(3)::before {
+    background: var(--danger);
   }
 
   .zone-metric-list dt {
@@ -1731,10 +1832,16 @@
   .zone-risk-stack {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 15px;
+    padding-top: 4px;
   }
 
   .zone-risk-item {
+    display: grid;
+    gap: 8px;
+  }
+
+  .zone-risk-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1760,11 +1867,12 @@
 
   .zone-pass-meter {
     display: grid;
+    box-sizing: border-box;
     gap: 8px;
-    padding: 18px;
-    border: 1px solid rgba(36, 142, 93, 0.16);
-    border-radius: 8px;
-    background: rgba(36, 142, 93, 0.06);
+    min-height: 120px;
+    padding: 6px 0 8px;
+    border: 0;
+    background: transparent;
   }
 
   .zone-pass-meter strong {
@@ -1776,8 +1884,15 @@
   .zone-trend-summary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 14px;
+    gap: 14px;
+    margin-top: 16px;
+    padding-top: 12px;
+    background: linear-gradient(var(--line), var(--line)) top / 100% 1px no-repeat;
+  }
+
+  .zone-trend-summary div {
+    display: grid;
+    gap: 4px;
   }
 
   .overview-section {
@@ -2099,6 +2214,8 @@
     grid-template-columns: 128px minmax(0, 1fr);
     align-items: center;
     gap: 14px;
+    padding-bottom: 14px;
+    background: linear-gradient(var(--line), var(--line)) bottom / 100% 1px no-repeat;
   }
 
   .audience-donut {
@@ -2178,19 +2295,41 @@
   .margin-radar-legend {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    gap: 12px;
   }
 
   .audience-insight-card,
   .margin-channel-card {
     display: grid;
+    position: relative;
     min-width: 0;
     gap: 6px;
     overflow: hidden;
-    padding: 10px;
-    border: 1px solid rgba(123, 117, 173, 0.14);
-    border-radius: 8px;
-    background: rgba(250, 249, 255, 0.72);
+    padding: 0 0 0 12px;
+    border: 0;
+    background: transparent;
+  }
+
+  .audience-insight-card::before,
+  .margin-channel-card::before {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 0;
+    width: 3px;
+    border-radius: 999px;
+    background: var(--primary);
+    content: "";
+  }
+
+  .audience-insight-card.warm::before,
+  .margin-channel-card.warm::before {
+    background: var(--danger);
+  }
+
+  .audience-insight-card.total::before,
+  .margin-channel-card.green::before {
+    background: var(--success);
   }
 
   .audience-insight-card span,
@@ -2211,22 +2350,24 @@
   }
 
   .audience-insight-card.warm {
-    background: rgba(216, 199, 137, 0.12);
+    background: transparent;
   }
 
   .audience-insight-card.primary {
-    background: rgba(91, 61, 167, 0.08);
+    background: transparent;
   }
 
   .audience-insight-card.total {
-    background: rgba(36, 142, 93, 0.08);
+    background: transparent;
   }
 
   .margin-radar-card {
     display: grid;
     grid-template-columns: 174px minmax(0, 1fr);
     align-items: center;
-    gap: 14px;
+    gap: 18px;
+    padding-bottom: 14px;
+    background: linear-gradient(var(--line), var(--line)) bottom / 100% 1px no-repeat;
   }
 
   .margin-radar {
@@ -2271,20 +2412,21 @@
   .cost-pressure,
   .repair-meter {
     display: grid;
-    gap: 9px;
+    gap: 10px;
     min-width: 0;
-    padding: 12px;
-    border: 1px solid rgba(123, 117, 173, 0.14);
-    border-radius: 8px;
-    background: rgba(250, 249, 255, 0.72);
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
 
   .head-tail-visual {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 118px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr);
     align-items: end;
-    gap: 12px;
-    min-height: 182px;
+    gap: 10px;
+    min-height: 150px;
+    padding-bottom: 14px;
+    background: linear-gradient(var(--line), var(--line)) bottom / 100% 1px no-repeat;
   }
 
   .profit-column {
@@ -2308,8 +2450,8 @@
   .profit-column-track {
     display: flex;
     align-items: flex-end;
-    width: 56px;
-    height: 118px;
+    width: 48px;
+    height: 94px;
     overflow: hidden;
     border-radius: 999px 999px 8px 8px;
     background: rgba(123, 117, 173, 0.1);
@@ -2328,9 +2470,9 @@
 
   .gap-bridge {
     align-self: center;
-    padding: 14px 12px;
+    padding: 11px 10px;
     border: 1px solid rgba(91, 61, 167, 0.18);
-    border-radius: 14px;
+    border-radius: 12px;
     background:
       radial-gradient(circle at 50% 10%, rgba(91, 61, 167, 0.12), transparent 58%),
       rgba(250, 249, 255, 0.86);
@@ -2349,9 +2491,9 @@
 
   .gap-bridge strong {
     display: block;
-    margin: 7px 0 5px;
+    margin: 5px 0 4px;
     color: var(--primary);
-    font-size: 21px;
+    font-size: 19px;
     line-height: 1.1;
   }
 

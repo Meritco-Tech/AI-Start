@@ -550,34 +550,40 @@
         </label>
       </nav>
 
-      <section v-if="activeReportTab === 'overview'" class="overview-section">
-        <div class="section-heading overview-heading">
-          <div>
-            <h2>{{ overviewTitle }}</h2>
-          </div>
-          <div class="overview-tools">
-            <div class="filters">
-              <el-select v-model="selectedMonth" placeholder="月份" size="large">
-                <el-option
-                  v-for="month in months"
-                  :key="month"
-                  :label="month"
-                  :value="month"
-                />
-              </el-select>
-              <el-select v-model="selectedZone" placeholder="全部" clearable size="large">
-                <el-option
-                  v-for="zone in zones"
-                  :key="zone"
-                  :label="formatRegionName(zone)"
-                  :value="zone"
-                />
-              </el-select>
+      <Transition name="report-tab" mode="out-in">
+        <section
+          v-if="activeReportTab === 'overview'"
+          key="overview"
+          class="overview-section report-view-panel"
+          :class="{ 'is-zone-focused': isZoneFocused }"
+        >
+          <div class="section-heading overview-heading motion-row" style="--row-delay: 20ms">
+            <div>
+              <h2>{{ overviewTitle }}</h2>
+            </div>
+            <div class="overview-tools">
+              <div class="filters">
+                <el-select v-model="selectedMonth" placeholder="月份" size="large">
+                  <el-option
+                    v-for="month in months"
+                    :key="month"
+                    :label="month"
+                    :value="month"
+                  />
+                </el-select>
+                <el-select v-model="selectedZone" placeholder="全部" clearable size="large">
+                  <el-option
+                    v-for="zone in zones"
+                    :key="zone"
+                    :label="formatRegionName(zone)"
+                    :value="zone"
+                  />
+                </el-select>
+              </div>
             </div>
           </div>
-        </div>
 
-        <section class="kpi-grid">
+        <section class="kpi-grid motion-row" style="--row-delay: 105ms">
           <article class="kpi-cell">
             <el-icon><Coin /></el-icon>
             <div class="kpi-copy">
@@ -616,7 +622,7 @@
         </section>
 
         <template v-if="isZoneFocused">
-          <section class="zone-focus-grid">
+          <section class="zone-focus-grid motion-row" style="--row-delay: 190ms">
             <article class="panel zone-focus-card">
               <div class="panel-title">
                 <h2>核心经营表现</h2>
@@ -714,7 +720,7 @@
         </template>
 
         <template v-else>
-          <section class="report-grid main-grid">
+          <section class="report-grid main-grid motion-row" style="--row-delay: 190ms">
             <article class="panel">
               <div class="panel-title">
                 <h2>区域利润率</h2>
@@ -799,7 +805,7 @@
             </article>
           </section>
 
-          <section class="report-grid detail-grid">
+          <section class="report-grid detail-grid motion-row" style="--row-delay: 295ms">
             <article class="panel">
               <div class="panel-title">
                 <h2>异常低价风险</h2>
@@ -878,7 +884,13 @@
           </section>
         </template>
 
-        <section class="report-grid overview-diagnostic-grid" :class="{ 'zone-focused-analysis-grid': isZoneFocused }">
+        <section
+          class="report-grid overview-diagnostic-grid motion-row-group"
+          :class="[
+            { 'zone-focused-analysis-grid': isZoneFocused },
+            isZoneFocused ? 'zone-analysis-motion' : 'overview-diagnostic-motion',
+          ]"
+        >
           <article v-if="isZoneFocused" class="panel">
             <div class="panel-title">
               <h2>渠道收入结构</h2>
@@ -1198,21 +1210,25 @@
             </div>
           </article>
         </section>
-      </section>
+        </section>
 
-      <section v-else-if="activeReportTab === 'quadrant'" class="quadrant-section">
-        <div class="section-heading">
-          <div>
-            <h2>收入规模 × 利润效率</h2>
+        <section
+          v-else-if="activeReportTab === 'quadrant'"
+          key="quadrant"
+          class="quadrant-section report-view-panel"
+        >
+          <div class="section-heading motion-row" style="--row-delay: 20ms">
+            <div>
+              <h2>收入规模 × 利润效率</h2>
+            </div>
+            <p>
+              {{ quadrantAnalysis.period }} · 收入中位数
+              {{ quadrantAnalysis.thresholds?.revenueMedianWan }}万 · 利润率中位数
+              {{ formatPercent(quadrantAnalysis.thresholds?.profitRateMedian) }}
+            </p>
           </div>
-          <p>
-            {{ quadrantAnalysis.period }} · 收入中位数
-            {{ quadrantAnalysis.thresholds?.revenueMedianWan }}万 · 利润率中位数
-            {{ formatPercent(quadrantAnalysis.thresholds?.profitRateMedian) }}
-          </p>
-        </div>
 
-        <section class="recommendation-band">
+        <section class="recommendation-band motion-row" style="--row-delay: 115ms">
           <article v-for="item in recommendations" :key="item.target" class="panel">
             <div class="recommendation-title">
               <el-icon><PriceTag /></el-icon>
@@ -1223,7 +1239,7 @@
           </article>
         </section>
 
-        <section class="quadrant-grid">
+        <section class="quadrant-grid motion-row" style="--row-delay: 215ms">
           <article
             v-for="item in overallQuadrants"
             :key="item.quadrant"
@@ -1258,7 +1274,7 @@
           </article>
         </section>
 
-        <section class="report-grid quadrant-main-grid">
+        <section class="report-grid quadrant-main-grid motion-row" style="--row-delay: 315ms">
           <article class="panel">
             <div class="panel-title">
               <h2>利润率正向驱动</h2>
@@ -1311,7 +1327,7 @@
           </article>
         </section>
 
-        <section class="report-grid quadrant-wide-grid">
+        <section class="report-grid quadrant-wide-grid motion-row" style="--row-delay: 415ms">
           <article class="panel">
             <div class="panel-title">
               <h2>套餐结构 × 渠道</h2>
@@ -1365,7 +1381,7 @@
           </article>
         </section>
 
-        <section class="province-quadrant-section">
+        <section class="province-quadrant-section motion-row" style="--row-delay: 515ms">
           <article class="panel province-panel">
             <div class="panel-title">
               <h2>六省省内四象限</h2>
@@ -1446,6 +1462,7 @@
           </article>
         </section>
       </section>
+      </Transition>
     </main>
   </div>
 </template>
@@ -1481,6 +1498,167 @@
     height: 100%;
     padding: 22px 26px 28px;
     overflow: auto;
+  }
+
+  .report-view-panel {
+    animation: report-page-in 280ms ease both;
+  }
+
+  .report-tab-enter-active {
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+
+  .report-tab-leave-active {
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+
+  .report-tab-enter-from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .report-tab-leave-to {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  .report-view-panel .motion-row,
+  .report-view-panel .motion-row-group > .panel {
+    animation: report-row-in 440ms cubic-bezier(0.2, 0.72, 0.28, 1) both;
+    animation-delay: var(--row-delay, 80ms);
+  }
+
+  .overview-diagnostic-motion > .panel:nth-child(-n + 2) {
+    --row-delay: 390ms;
+  }
+
+  .overview-diagnostic-motion > .panel:nth-child(n + 3) {
+    --row-delay: 490ms;
+  }
+
+  .zone-analysis-motion > .panel:nth-child(-n + 3) {
+    --row-delay: 300ms;
+  }
+
+  .zone-analysis-motion > .panel:nth-child(n + 4) {
+    --row-delay: 400ms;
+  }
+
+  .motion-row > .kpi-cell,
+  .motion-row > .panel,
+  .province-quadrant-section.motion-row > .panel {
+    animation: report-row-child-in 300ms cubic-bezier(0.2, 0.72, 0.28, 1) both;
+    animation-delay: calc(var(--row-delay, 80ms) + var(--cell-offset, 0ms));
+  }
+
+  .motion-row > :nth-child(2),
+  .motion-row-group > .panel:nth-child(2) {
+    --cell-offset: 18ms;
+  }
+
+  .motion-row > :nth-child(3),
+  .motion-row-group > .panel:nth-child(3) {
+    --cell-offset: 36ms;
+  }
+
+  .motion-row > :nth-child(4),
+  .motion-row-group > .panel:nth-child(4) {
+    --cell-offset: 18ms;
+  }
+
+  .motion-row > :nth-child(5),
+  .motion-row-group > .panel:nth-child(5) {
+    --cell-offset: 36ms;
+  }
+
+  .motion-row > :nth-child(6),
+  .motion-row-group > .panel:nth-child(6) {
+    --cell-offset: 54ms;
+  }
+
+  .report-view-panel .bar-track i,
+  .report-view-panel .health-scale i,
+  .report-view-panel .mini-track i,
+  .report-view-panel .head-tail-range-track i {
+    transform-origin: left center;
+    animation: report-bar-in 520ms cubic-bezier(0.2, 0.72, 0.28, 1) both;
+    animation-delay: calc(var(--row-delay, 120ms) + var(--cell-offset, 0ms) + 150ms);
+  }
+
+  .report-view-panel .profit-column-track i {
+    transform-origin: center bottom;
+    animation: report-bar-y-in 520ms cubic-bezier(0.2, 0.72, 0.28, 1) both;
+    animation-delay: calc(var(--row-delay, 120ms) + var(--cell-offset, 0ms) + 150ms);
+  }
+
+  .report-view-panel .trend-chart svg,
+  .report-view-panel .margin-radar,
+  .report-view-panel .province-scatter-point,
+  .report-view-panel .audience-donut {
+    animation: report-chart-in 420ms ease both;
+    animation-delay: calc(var(--row-delay, 120ms) + var(--cell-offset, 0ms) + 110ms);
+  }
+
+  @keyframes report-page-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes report-row-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+      filter: saturate(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: saturate(1);
+    }
+  }
+
+  @keyframes report-row-child-in {
+    from {
+      opacity: 0.72;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes report-chart-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes report-bar-in {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes report-bar-y-in {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: scaleY(1);
+    }
   }
 
   .report-header {
@@ -3382,6 +3560,35 @@
 
     .head-tail-range-row > em {
       text-align: left;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .report-view-panel,
+    .report-view-panel .motion-row,
+    .report-view-panel .motion-row-group > .panel,
+    .motion-row > .kpi-cell,
+    .motion-row > .panel,
+    .province-quadrant-section.motion-row > .panel,
+    .report-view-panel .section-heading,
+    .report-view-panel .kpi-cell,
+    .report-view-panel .panel,
+    .report-view-panel .bar-track i,
+    .report-view-panel .health-scale i,
+    .report-view-panel .mini-track i,
+    .report-view-panel .head-tail-range-track i,
+    .report-view-panel .profit-column-track i,
+    .report-view-panel .trend-chart svg,
+    .report-view-panel .margin-radar,
+    .report-view-panel .province-scatter-point,
+    .report-view-panel .audience-donut {
+      animation: none;
+      transform: none;
+    }
+
+    .report-tab-enter-active,
+    .report-tab-leave-active {
+      transition: none;
     }
   }
 </style>

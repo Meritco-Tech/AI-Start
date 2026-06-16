@@ -6,6 +6,7 @@ This directory stores Codex-written change-history notes for file-changing tasks
 
 | Date | Change | File |
 | --- | --- | --- |
+| 2026-06-16 | Added the Cofco social media monitoring demo route and dock entry. | [2026-06-16-add-cofco-social-monitor.md](2026-06-16-add-cofco-social-monitor.md) |
 | 2026-06-05 | Updated the Wallace report header title and removed the visible data-source path. | [2026-06-05-update-wallace-report-header-title.md](2026-06-05-update-wallace-report-header-title.md) |
 | 2026-06-05 | Added row-by-row entry animations for Wallace overview and quadrant report pages. | [2026-06-05-add-wallace-report-entry-motion.md](2026-06-05-add-wallace-report-entry-motion.md) |
 | 2026-06-05 | Centered and slightly reduced the Wallace selected-zone audience donut label. | [2026-06-05-center-wallace-audience-donut-label.md](2026-06-05-center-wallace-audience-donut-label.md) |

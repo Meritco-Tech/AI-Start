@@ -4,6 +4,7 @@ import PlaceholderView from "../views/PlaceholderView.vue";
 import SessionView from "../views/SessionView.vue";
 import WallaceReportView from "../views/WallaceReportView.vue";
 import WorkbenchView from "../views/WorkbenchView.vue";
+import CofcoSocialDemoView from "../views/CofcoSocialDemoView.vue";
 
 const routes = [
   {
@@ -35,6 +36,15 @@ const routes = [
     meta: {
       dockKey: "workbench",
       title: "工作台",
+    },
+  },
+  {
+    path: "/cofco-social",
+    name: "cofcoSocial",
+    component: CofcoSocialDemoView,
+    meta: {
+      dockKey: "cofcoSocial",
+      title: "中粮社媒监测",
     },
   },
   {
